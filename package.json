@@ -1,0 +1,26 @@
+{
+  "name": "diagnova",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "dev:api": "turbo run dev --filter=@diagnova/api",
+    "dev:fastapi": "turbo run dev --filter=@diagnova/fastapi",
+    "dev:types": "turbo run dev --filter=@diagnova/shared-types",
+    "dev:web": "turbo run dev --filter=@diagnova/web",
+    "build:api": "turbo run build --filter=@diagnova/api",
+    "build:fastapi": "turbo run build --filter=@diagnova/fastapi",
+    "build:types": "turbo run build --filter=@diagnova/shared-types",
+    "build:web": "turbo run build --filter=@diagnova/web"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  },
+  "packageManager": "npm@10.0.0"
+}

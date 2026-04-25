@@ -1,0 +1,15 @@
+[project]
+name = "diagnova-fastapi"
+version = "1.0.0"
+description = "DiagNova AI analysis service"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "httpx>=0.28.0",
+    "python-multipart>=0.0.20",
+    "pydantic>=2.10.0",
+]
+
+[project.scripts]
+dev = "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
