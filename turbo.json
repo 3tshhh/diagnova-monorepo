@@ -10,7 +10,6 @@
       "outputs": ["dist/**", "build/**", "__pycache__/**"]
     },
     "dev": {
-      "dependsOn": ["^dev"],
       "cache": false,
       "persistent": true
     },

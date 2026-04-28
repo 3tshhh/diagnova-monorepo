@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Patient } from './patient.entity';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class PatientService {
@@ -55,5 +56,24 @@ export class PatientService {
 
   async updatePhotoKey(id: string, photoKey: string): Promise<void> {
     await this.patientRepository.update({ id }, { photoUrl: photoKey });
+  }
+
+  async clearPhotoKey(id: string): Promise<void> {
+    await this.patientRepository.update({ id }, { photoUrl: null });
+  }
+
+  async updateProfile(id: string, data: UpdateProfileDto): Promise<void> {
+    await this.patientRepository.update(
+      { id },
+      {
+        ...(data.fullName !== undefined ? { fullName: data.fullName } : {}),
+        ...(data.phoneNumber !== undefined
+          ? { phoneNumber: data.phoneNumber }
+          : {}),
+        ...(data.address !== undefined ? { address: data.address } : {}),
+        ...(data.age !== undefined ? { age: data.age } : {}),
+        ...(data.nationalId !== undefined ? { nationalId: data.nationalId } : {}),
+      },
+    );
   }
 }

@@ -5,7 +5,7 @@ import { databaseModule, redisCacheModule } from './config/database.config';
 import { GlobalModule } from './shared/global.module';
 import { PatientModule } from './modules/patient/patient.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { CasesModule } from './cases/cases.module';
+import { CasesModule } from './modules/cases/cases.module';
 import { InternalModule } from './internal/internal.module';
 
 @Module({

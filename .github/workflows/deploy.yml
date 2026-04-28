@@ -1,0 +1,156 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  PUBLIC_API_BASE_URL: ${{ secrets.PUBLIC_API_BASE_URL }}
+  ECR_REPOSITORY_API: ${{ vars.ECR_REPOSITORY_API }}
+  ECR_REPOSITORY_WEB: ${{ vars.ECR_REPOSITORY_WEB }}
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USER: ${{ secrets.EC2_USER }}
+  EC2_SSH_PORT: ${{ secrets.EC2_SSH_PORT }}
+  EC2_DEPLOY_PATH: ${{ secrets.EC2_DEPLOY_PATH }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Generate short-lived ECR password
+        id: ecr-password
+        shell: bash
+        run: echo "password=$(aws ecr get-login-password --region "$AWS_REGION")" >> "$GITHUB_OUTPUT"
+
+      - name: Validate deploy configuration
+        shell: bash
+        run: |
+          required_vars=(
+            AWS_REGION
+            PUBLIC_API_BASE_URL
+            ECR_REPOSITORY_API
+            ECR_REPOSITORY_WEB
+            EC2_HOST
+            EC2_USER
+            EC2_SSH_PORT
+            EC2_DEPLOY_PATH
+          )
+
+          for var_name in "${required_vars[@]}"; do
+            if [ -z "${!var_name}" ]; then
+              echo "Missing required repository variable: ${var_name}"
+              exit 1
+            fi
+          done
+
+          if [ -z "${{ secrets.EC2_SSH_PRIVATE_KEY }}" ]; then
+            echo "Missing required repository secret: EC2_SSH_PRIVATE_KEY"
+            exit 1
+          fi
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/api.Dockerfile
+          push: true
+          provenance: false
+          sbom: false
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:latest
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/web.Dockerfile
+          push: true
+          provenance: false
+          sbom: false
+          build-args: |
+            VITE_API_BASE_URL=${{ env.PUBLIC_API_BASE_URL }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WEB }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WEB }}:latest
+
+      - name: Copy deployment files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          port: ${{ env.EC2_SSH_PORT }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: docker-compose.ec2.yml
+          target: ${{ env.EC2_DEPLOY_PATH }}
+          overwrite: true
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_PASSWORD: ${{ steps.ecr-password.outputs.password }}
+          ECR_REPOSITORY_API: ${{ env.ECR_REPOSITORY_API }}
+          ECR_REPOSITORY_WEB: ${{ env.ECR_REPOSITORY_WEB }}
+          EC2_DEPLOY_PATH: ${{ env.EC2_DEPLOY_PATH }}
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          port: ${{ env.EC2_SSH_PORT }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          envs: ECR_REGISTRY,ECR_PASSWORD,ECR_REPOSITORY_API,ECR_REPOSITORY_WEB,EC2_DEPLOY_PATH
+          script: |
+            set -e
+            mkdir -p "$EC2_DEPLOY_PATH"
+            cd "$EC2_DEPLOY_PATH"
+            echo "$ECR_PASSWORD" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+            export ECR_REGISTRY
+            export ECR_REPOSITORY_API
+            export ECR_REPOSITORY_WEB
+            docker compose -f docker-compose.ec2.yml down --remove-orphans
+            docker compose -f docker-compose.ec2.yml pull
+            docker compose -f docker-compose.ec2.yml up -d --force-recreate
+            docker image prune -f
+
+      - name: Notify Discord - Success
+        if: success()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_DEPLOY_URL }}
+          title: "Deploy Succeeded"
+          description: "Deployed `${{ github.sha }}` to EC2"
+          color: 0x00ff00
+
+      - name: Notify Discord - Failure
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_DEPLOY_URL }}
+          title: "Deploy Failed"
+          description: "Deploy of `${{ github.sha }}` to EC2 failed"
+          color: 0xff0000

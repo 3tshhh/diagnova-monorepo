@@ -1,1 +1,0 @@
-# DiagNova FastAPI App

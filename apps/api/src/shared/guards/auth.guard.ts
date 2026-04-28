@@ -18,10 +18,10 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const accessToken = request.headers['authorization'];
-    if (!accessToken) throw new BadRequestException('please login');
+    if (!accessToken) throw new UnauthorizedException('please login');
 
     const [bearer, token] = String(accessToken).split(' ');
-    if (!token) throw new BadRequestException('please login');
+    if (!token) throw new UnauthorizedException('please login');
 
     if (bearer !== (process.env.JWT_PREFIX || 'Bearer')) {
       throw new BadRequestException('invalid token');
@@ -30,16 +30,16 @@ export class AuthGuard implements CanActivate {
     const verifiedToken = this.tokenService.verifyToken(token, {
       secret: process.env.JWT_ACCESS_SECRET as string,
     });
-    if (!verifiedToken) throw new BadRequestException('please login');
+    if (!verifiedToken) throw new UnauthorizedException('please login');
 
     const isBlacklisted = await this.tokenService.checkBlackListed(
       (verifiedToken as { jti: string }).jti,
     );
-    if (isBlacklisted) throw new BadRequestException('please login');
+    if (isBlacklisted) throw new UnauthorizedException('please login');
 
     const patientId = (verifiedToken as { patientId: string }).patientId;
     const patient = await this.patientService.findById(patientId);
-    if (!patient) throw new BadRequestException('Patient no longer exists');
+    if (!patient) throw new UnauthorizedException('Patient no longer exists');
 
     request.loggedInPatient = {
       verifiedToken,

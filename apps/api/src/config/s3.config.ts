@@ -1,19 +1,29 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import multerS3 from 'multer-s3';
 import { extname } from 'path';
+
+function getRequiredEnv(configService: ConfigService, key: string): string {
+  const value = configService.get<string>(key)?.trim();
+  if (!value) {
+    throw new InternalServerErrorException(
+      `Missing required S3 configuration: ${key}. Set it in apps/api/.env before using file upload or export features.`,
+    );
+  }
+  return value;
+}
 
 /**
  * Build an S3Client from env config.
  */
 function buildS3Client(configService: ConfigService): S3Client {
   return new S3Client({
-    region: configService.get<string>('AWS_REGION', 'us-east-1'),
+    region: configService.get<string>('AWS_REGION', 'eu-north-1'),
     credentials: {
-      accessKeyId: configService.get<string>('AWS_ACCESS_KEY_ID', ''),
-      secretAccessKey: configService.get<string>('AWS_SECRET_ACCESS_KEY', ''),
+      accessKeyId: getRequiredEnv(configService, 'AWS_ACCESS_KEY_ID'),
+      secretAccessKey: getRequiredEnv(configService, 'AWS_SECRET_ACCESS_KEY'),
     },
   });
 }
@@ -27,7 +37,7 @@ function buildS3Client(configService: ConfigService): S3Client {
  */
 export function createS3Storage(configService: ConfigService, folder: string) {
   const s3 = buildS3Client(configService);
-  const bucket = configService.get<string>('AWS_S3_BUCKET', '');
+  const bucket = getRequiredEnv(configService, 'AWS_S3_BUCKET');
 
   return multerS3({
     s3,
@@ -54,7 +64,7 @@ export class S3Service {
 
   constructor(private readonly configService: ConfigService) {
     this.s3 = buildS3Client(configService);
-    this.bucket = this.configService.get<string>('AWS_S3_BUCKET', '');
+    this.bucket = getRequiredEnv(this.configService, 'AWS_S3_BUCKET');
   }
 
   /**
@@ -68,5 +78,13 @@ export class S3Service {
       Key: key,
     });
     return getSignedUrl(this.s3, command, { expiresIn: expiry });
+  }
+
+  async deleteObject(key: string): Promise<void> {
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+    await this.s3.send(command);
   }
 }

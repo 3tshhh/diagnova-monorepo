@@ -1,18 +1,7 @@
 {
-  "compilerOptions": {
-    "target": "ES2021",
-    "module": "ESNext",
-    "lib": ["ES2021", "DOM", "DOM.Iterable"],
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "strict": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true
-  },
-  "include": ["src", "vite-env.d.ts"]
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
 }

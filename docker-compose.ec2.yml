@@ -1,0 +1,19 @@
+services:
+  api:
+    image: ${ECR_REGISTRY}/${ECR_REPOSITORY_API}:latest
+    restart: unless-stopped
+    env_file:
+      - apps/api/.env
+    ports:
+      - "127.0.0.1:3000:3000"   # was: expose: ["3000"]
+
+  web:
+    image: ${ECR_REGISTRY}/${ECR_REPOSITORY_WEB}:latest
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:8080:80"     # was: expose: ["80"]
+
+      - "80"
+

@@ -1,10 +1,10 @@
 export default () => ({
   database: {
     url: process.env.DATABASE_URL,
+    synchronize: process.env.DB_SYNCHRONIZE === 'true',
   },
   redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
   },
   jwt: {
     prefix: process.env.JWT_PREFIX || 'Bearer',

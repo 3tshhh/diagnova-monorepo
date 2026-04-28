@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
-import { CasesService } from '../cases/cases.service';
+import { CasesService } from '../modules/cases/cases.service';
 
 class CompleteDiagnosisDto {
   @IsOptional()
@@ -19,7 +19,7 @@ class CompleteDiagnosisDto {
   @IsString()
   error?: string;
 }
-
+// 
 @Controller('internal')
 export class InternalController {
   constructor(private readonly casesService: CasesService) {}
