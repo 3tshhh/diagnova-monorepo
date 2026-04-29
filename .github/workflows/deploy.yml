@@ -22,6 +22,8 @@ env:
   EC2_USER: ${{ secrets.EC2_USER }}
   EC2_SSH_PORT: ${{ secrets.EC2_SSH_PORT }}
   EC2_DEPLOY_PATH: ${{ secrets.EC2_DEPLOY_PATH }}
+  EMAIL_USER: ${{ secrets.EMAIL_USER }}
+  GOOGLE_APP_PASSWORD: ${{ secrets.GOOGLE_APP_PASSWORD }}
 
 jobs:
   build-and-deploy:
@@ -118,12 +120,14 @@ jobs:
           ECR_REPOSITORY_API: ${{ env.ECR_REPOSITORY_API }}
           ECR_REPOSITORY_WEB: ${{ env.ECR_REPOSITORY_WEB }}
           EC2_DEPLOY_PATH: ${{ env.EC2_DEPLOY_PATH }}
+          EMAIL_USER: ${{ env.EMAIL_USER }}
+          GOOGLE_APP_PASSWORD: ${{ env.GOOGLE_APP_PASSWORD }}
         with:
           host: ${{ env.EC2_HOST }}
           username: ${{ env.EC2_USER }}
           port: ${{ env.EC2_SSH_PORT }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          envs: ECR_REGISTRY,ECR_PASSWORD,ECR_REPOSITORY_API,ECR_REPOSITORY_WEB,EC2_DEPLOY_PATH
+          envs: ECR_REGISTRY,ECR_PASSWORD,ECR_REPOSITORY_API,ECR_REPOSITORY_WEB,EC2_DEPLOY_PATH,EMAIL_USER,GOOGLE_APP_PASSWORD
           script: |
             set -e
             mkdir -p "$EC2_DEPLOY_PATH"
@@ -132,6 +136,8 @@ jobs:
             export ECR_REGISTRY
             export ECR_REPOSITORY_API
             export ECR_REPOSITORY_WEB
+            export EMAIL_USER
+            export GOOGLE_APP_PASSWORD
             docker compose -f docker-compose.ec2.yml down --remove-orphans
             docker compose -f docker-compose.ec2.yml pull
             docker compose -f docker-compose.ec2.yml up -d --force-recreate
