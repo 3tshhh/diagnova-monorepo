@@ -10,12 +10,12 @@ type Model = {
 };
 
 const TEAM = [
-  { name: 'Karim Ashraf',   initials: 'KA', photo: import.meta.env.VITE_TEAM_1_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_1_LINKEDIN as string },
-  { name: 'Aya Fawzy',      initials: 'AF', photo: import.meta.env.VITE_TEAM_2_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_2_LINKEDIN as string },
-  { name: 'Shahd Ahmed',    initials: 'SA', photo: import.meta.env.VITE_TEAM_3_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_3_LINKEDIN as string },
-  { name: 'Jana Waleed',    initials: 'JW', photo: import.meta.env.VITE_TEAM_4_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_4_LINKEDIN as string },
-  { name: 'Sara Mohamed',   initials: 'SM', photo: import.meta.env.VITE_TEAM_5_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_5_LINKEDIN as string },
-  { name: 'Mohamed Hesham', initials: 'MH', photo: import.meta.env.VITE_TEAM_6_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_6_LINKEDIN as string },
+  { name: 'Karim Ashraf',   initials: 'KA', photo: import.meta.env.VITE_TEAM_1_PHOTO, linkedin: import.meta.env.VITE_TEAM_1_LINKEDIN },
+  { name: 'Aya Fawzy',      initials: 'AF', photo: import.meta.env.VITE_TEAM_2_PHOTO, linkedin: import.meta.env.VITE_TEAM_2_LINKEDIN },
+  { name: 'Shahd Ahmed',    initials: 'SA', photo: import.meta.env.VITE_TEAM_3_PHOTO, linkedin: import.meta.env.VITE_TEAM_3_LINKEDIN },
+  { name: 'Jana Waleed',    initials: 'JW', photo: import.meta.env.VITE_TEAM_4_PHOTO, linkedin: import.meta.env.VITE_TEAM_4_LINKEDIN },
+  { name: 'Sara Mohamed',   initials: 'SM', photo: import.meta.env.VITE_TEAM_5_PHOTO, linkedin: import.meta.env.VITE_TEAM_5_LINKEDIN },
+  { name: 'Mohamed Hesham', initials: 'MH', photo: import.meta.env.VITE_TEAM_6_PHOTO, linkedin: import.meta.env.VITE_TEAM_6_LINKEDIN },
 ];
 
 const MODELS: Model[] = [
