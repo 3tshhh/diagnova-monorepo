@@ -10,12 +10,12 @@ export function uiScanTypeToCaseType(scanType: 'Lung X-Ray' | 'Bone Fracture'): 
 export async function createCase(payload: {
   file: File;
   caseType: CaseType;
-  clinicDescription: string;
+  clinicDescription?: string;
 }): Promise<CaseCreatedResponse> {
   const formData = new FormData();
   formData.append('xray', payload.file);
   formData.append('case_type', payload.caseType);
-  formData.append('clinic_description', payload.clinicDescription);
+  if (payload.clinicDescription) formData.append('clinic_description', payload.clinicDescription);
 
   return apiRequest<CaseCreatedResponse>('/cases', {
     method: 'POST',
