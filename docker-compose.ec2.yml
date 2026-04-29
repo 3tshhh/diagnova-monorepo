@@ -10,8 +10,6 @@ services:
   web:
     image: ${ECR_REGISTRY}/${ECR_REPOSITORY_WEB}:latest
     restart: unless-stopped
-    env_file:
-      - apps/web/.env
     depends_on:
       - api
     ports:
