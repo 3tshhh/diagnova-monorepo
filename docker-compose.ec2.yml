@@ -4,6 +4,9 @@ services:
     restart: unless-stopped
     env_file:
       - apps/api/.env
+    environment:
+      EMAIL_USER: ${EMAIL_USER}
+      GOOGLE_APP_PASSWORD: ${GOOGLE_APP_PASSWORD}
     ports:
       - "127.0.0.1:3000:3000"
 
