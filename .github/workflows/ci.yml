@@ -80,6 +80,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Create or reuse pull request from dev to main
         id: pr
         env:
