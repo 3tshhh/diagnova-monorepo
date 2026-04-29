@@ -46,6 +46,7 @@ export class ProfileController {
       address: data.address,
       age: data.age,
       nationalId: data.nationalId,
+      gender: data.gender,
       photoUrl,
       createdAt: data.createdAt,
     };
@@ -138,6 +139,7 @@ export class ProfileController {
       address: data.address,
       age: data.age,
       nationalId: data.nationalId,
+      gender: data.gender,
       photoUrl,
       createdAt: data.createdAt,
     };

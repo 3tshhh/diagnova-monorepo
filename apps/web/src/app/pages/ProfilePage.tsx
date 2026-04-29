@@ -6,12 +6,15 @@ import { deleteAccount, updatePassword } from '../api/auth';
 import { useAuthGuard } from '../api/useAuthGuard';
 import type { PatientProfile } from '../api/types';
 
+const GENDER_OPTIONS = ['N/A', 'Male', 'Female', 'Other'] as const;
+
 type ProfileForm = {
   fullName: string;
   phoneNumber: string;
   address: string;
   age: string;
   nationalId: string;
+  gender: string;
 };
 
 function toForm(profile: PatientProfile): ProfileForm {
@@ -21,6 +24,7 @@ function toForm(profile: PatientProfile): ProfileForm {
     address: profile.address ?? '',
     age: profile.age === null ? '' : String(profile.age),
     nationalId: profile.nationalId ?? '',
+    gender: profile.gender ?? 'N/A',
   };
 }
 
@@ -45,6 +49,7 @@ export function ProfilePage() {
     address: '',
     age: '',
     nationalId: '',
+    gender: 'N/A',
   });
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
   const [loading, setLoading] = useState(true);
@@ -117,6 +122,7 @@ export function ProfilePage() {
         address: form.address.trim() || undefined,
         age: form.age.trim() ? Number(form.age) : undefined,
         nationalId: form.nationalId.trim() || undefined,
+        gender: form.gender || undefined,
       });
 
       setProfile(updated);
@@ -332,6 +338,12 @@ export function ProfilePage() {
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+              <span>Gender</span>
+              <span className="mono" style={{ color: 'var(--text)' }}>
+                {profile.gender || 'N/A'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
               <span>National ID</span>
               <span className="mono" style={{ color: 'var(--text)' }}>
                 {profile.nationalId || 'Not set'}
@@ -431,6 +443,20 @@ export function ProfilePage() {
                   onChange={(e) => setForm({ ...form, age: e.target.value })}
                   style={{ background: editing ? '#fff' : '#FAFCFC' }}
                 />
+              </div>
+              <div>
+                <label className="field-label">Gender</label>
+                <select
+                  className="input"
+                  disabled={!editing}
+                  value={form.gender}
+                  onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                  style={{ background: editing ? '#fff' : '#FAFCFC' }}
+                >
+                  {GENDER_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label className="field-label">Address</label>
