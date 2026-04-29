@@ -51,6 +51,7 @@ export type PatientProfile = {
   address: string | null;
   age: number | null;
   nationalId: string | null;
+  gender: string;
   photoUrl: string | null;
   createdAt: string;
 };
