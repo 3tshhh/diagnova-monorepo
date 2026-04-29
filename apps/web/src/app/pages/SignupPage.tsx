@@ -30,7 +30,7 @@ export function SignupPage() {
         email: form.email,
         password: form.pw,
       });
-      navigate('/app');
+      navigate('/app/profile');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to create account';
       setErr(message);
