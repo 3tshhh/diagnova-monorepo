@@ -15,17 +15,16 @@ export function getLatestDiagnosis(patientCase: PatientCaseResponse): DiagnosisR
   return [...patientCase.diagnoses].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? null;
 }
 
-function findingLooksNegative(finding: string): boolean {
-  const value = finding.toLowerCase();
-  return value.includes('no acute') || value.includes('negative') || value.includes('no fracture') || value.includes('clear');
+function isNoFinding(finding: string): boolean {
+  return finding.toLowerCase().trim().startsWith('no finding');
 }
 
 export function diagnosisToResultLabel(diagnosis: DiagnosisResponse | null): ScanRow['resultLabel'] {
   if (!diagnosis) return 'Pending';
   if (diagnosis.status === 'pending') return 'Pending';
   if (diagnosis.status === 'failed') return 'Failed';
-  if (!diagnosis.finding) return 'Positive';
-  return findingLooksNegative(diagnosis.finding) ? 'Negative' : 'Positive';
+  if (!diagnosis.finding) return 'Pending';
+  return isNoFinding(diagnosis.finding) ? 'Negative' : 'Positive';
 }
 
 export function mapCaseToScanRow(patientCase: PatientCaseResponse): ScanRow {
