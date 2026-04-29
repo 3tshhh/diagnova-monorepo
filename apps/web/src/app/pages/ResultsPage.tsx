@@ -2,22 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Icon } from '../components/Icon';
 import { PageHeader } from '../components/PageHeader';
-import { exportCase, getCase, openDiagnosisStream, rerunDiagnosis } from '../api/cases';
+import { getCase, openDiagnosisStream, rerunDiagnosis } from '../api/cases';
 import { diagnosisToResultLabel, getLatestDiagnosis } from '../api/view-models';
 import { useAuthGuard } from '../api/useAuthGuard';
 import type { DiagnosisResponse, PatientCaseResponse } from '../api/types';
-
-function createReportDownload(report: string, caseId: string): void {
-  const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `diagnova-case-${caseId}.txt`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
+import { buildReportHtml } from '../utils/reportTemplate';
 
 function getStatusTone(resultLabel: ReturnType<typeof diagnosisToResultLabel>) {
   if (resultLabel === 'Negative') {
@@ -150,14 +139,22 @@ export function ResultsPage() {
         : currentDiagnosis?.finding || 'Diagnosis completed without a textual finding.';
 
   const downloadReport = async () => {
-    if (!caseId) return;
+    if (!patientCase || !currentDiagnosis) return;
 
     setExporting(true);
     setError('');
 
     try {
-      const report = await exportCase(caseId);
-      createReportDownload(report, caseId);
+      const html = await buildReportHtml(patientCase, activeDiagnosisId);
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const blobUrl = URL.createObjectURL(blob);
+      const win = window.open(blobUrl, '_blank');
+      if (!win) {
+        URL.revokeObjectURL(blobUrl);
+        setError('Unable to open report window. Allow pop-ups for this site and try again.');
+        return;
+      }
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to export report';
       setError(message);

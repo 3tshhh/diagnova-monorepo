@@ -40,7 +40,10 @@ export class CasesController {
   @UseGuards(AuthGuard)
   @UseInterceptors(
     FileInterceptor('xray', {
-      storage: createS3Storage(new ConfigService(), 'xrays'),
+      storage: createS3Storage(
+        new ConfigService(),
+        (req) => `xrays/${req.body?.case_type ?? 'unknown'}`,
+      ),
     }),
   )
   async createCase(

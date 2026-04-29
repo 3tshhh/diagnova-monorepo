@@ -27,6 +27,7 @@ import {
   UpdatePasswordDto,
 } from './auth.dto';
 import { getRemainingTTL } from '../../shared/utils/common.utils';
+import { CaseType } from '../patient-case/patient-case.entity';
 
 @Injectable()
 export class AuthService {
@@ -198,16 +199,15 @@ export class AuthService {
       throw new BadRequestException('Email does not match');
     }
 
-    const s3Deletions: Promise<void>[] = [];
-    if (patient.photoUrl) {
-      s3Deletions.push(this.s3Service.deleteObject(patient.photoUrl));
-    }
-    for (const patientCase of patient.cases ?? []) {
-      if (patientCase.xrayUrl) {
-        s3Deletions.push(this.s3Service.deleteObject(patientCase.xrayUrl));
-      }
-    }
-    await Promise.allSettled(s3Deletions);
+    // Delete all S3 objects by prefix so untracked files are also removed.
+    // New key format: xrays/{case_type}/{patientId}{uuid}.ext  /  avatars/{patientId}{uuid}.ext
+    const prefixDeletions = [
+      ...Object.values(CaseType).map((ct) =>
+        this.s3Service.deleteAllByPrefix(`xrays/${ct}/${patientId}`),
+      ),
+      this.s3Service.deleteAllByPrefix(`avatars/${patientId}`),
+    ];
+    await Promise.allSettled(prefixDeletions);
 
     await this.patientService.deletePatientAccount(patientId);
 

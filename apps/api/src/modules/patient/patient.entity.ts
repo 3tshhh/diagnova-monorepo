@@ -35,6 +35,9 @@ export class Patient {
   @Column({ name: 'national_id', type: 'varchar', length: 100, unique: true, nullable: true })
   nationalId!: string | null;
 
+  @Column({ type: 'varchar', length: 20, nullable: false, default: 'N/A' })
+  gender!: string;
+
   @Column({ name: 'photo_url', type: 'varchar', length: 500, nullable: true })
   photoUrl!: string | null;
 

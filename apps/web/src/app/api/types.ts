@@ -36,6 +36,11 @@ export type PatientCaseResponse = {
   xrayUrl: string;
   diagnoses: DiagnosisResponse[];
   createdAt: string;
+  patient?: {
+    fullName: string | null;
+    email: string;
+    age: number | null;
+  };
 };
 
 export type PatientProfile = {

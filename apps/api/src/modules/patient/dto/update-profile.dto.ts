@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -25,4 +25,9 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(100)
   nationalId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['Male', 'Female', 'Other', 'N/A'])
+  gender?: string;
 }

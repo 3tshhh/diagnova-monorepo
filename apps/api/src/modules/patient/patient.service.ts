@@ -32,6 +32,7 @@ export class PatientService {
     address?: string;
     age?: number;
     nationalId?: string;
+    gender?: string;
     photoUrl?: string;
   }) {
     const derivedFullName =
@@ -46,6 +47,7 @@ export class PatientService {
       address: data.address ?? null,
       age: data.age ?? null,
       nationalId: data.nationalId ?? null,
+      gender: data.gender ?? 'N/A',
       photoUrl: data.photoUrl ?? null,
     });
     return this.patientRepository.save(patient);
@@ -89,6 +91,7 @@ export class PatientService {
         ...(data.address !== undefined ? { address: data.address } : {}),
         ...(data.age !== undefined ? { age: data.age } : {}),
         ...(data.nationalId !== undefined ? { nationalId: data.nationalId } : {}),
+        ...(data.gender !== undefined ? { gender: data.gender } : {}),
       },
     );
   }

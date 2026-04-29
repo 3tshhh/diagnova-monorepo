@@ -13,6 +13,7 @@ export async function updateProfile(payload: {
   address?: string;
   age?: number;
   nationalId?: string;
+  gender?: string;
 }): Promise<PatientProfile> {
   return apiRequest<PatientProfile>('/profile', {
     method: 'PATCH',
