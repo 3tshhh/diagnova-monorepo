@@ -40,3 +40,8 @@ export class UpdatePasswordDto {
   @MinLength(8)
   newPassword!: string;
 }
+
+export class DeleteAccountDto {
+  @IsEmail()
+  email!: string;
+}

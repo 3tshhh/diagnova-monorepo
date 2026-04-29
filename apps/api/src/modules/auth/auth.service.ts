@@ -10,6 +10,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { randomUUID } from 'crypto';
 import { PatientService } from '../patient/patient.service';
+import { S3Service } from '../../config/s3.config';
 import { TokenService } from '../../shared/services/token.service';
 import {
   compareHash,
@@ -19,6 +20,7 @@ import {
   sendEmail,
 } from '../../shared/utils';
 import {
+  DeleteAccountDto,
   ForgotPasswordLinkDto,
   LoginDto,
   RegisterDto,
@@ -30,6 +32,7 @@ import { getRemainingTTL } from '../../shared/utils/common.utils';
 export class AuthService {
   constructor(
     private readonly patientService: PatientService,
+    private readonly s3Service: S3Service,
     private readonly tokenService: TokenService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) { }
@@ -185,6 +188,30 @@ export class AuthService {
     await this.cacheManager.del(redisKey);
 
     return { message: 'password reset successfully' };
+  }
+
+  async deleteAccount(patientId: string, dto: DeleteAccountDto) {
+    const patient = await this.patientService.findByIdWithCases(patientId);
+    if (!patient) throw new NotFoundException('Patient not found');
+
+    if (patient.email !== dto.email.toLowerCase().trim()) {
+      throw new BadRequestException('Email does not match');
+    }
+
+    const s3Deletions: Promise<void>[] = [];
+    if (patient.photoUrl) {
+      s3Deletions.push(this.s3Service.deleteObject(patient.photoUrl));
+    }
+    for (const patientCase of patient.cases ?? []) {
+      if (patientCase.xrayUrl) {
+        s3Deletions.push(this.s3Service.deleteObject(patientCase.xrayUrl));
+      }
+    }
+    await Promise.allSettled(s3Deletions);
+
+    await this.patientService.deletePatientAccount(patientId);
+
+    return { message: 'Account deleted successfully' };
   }
 
   async updatePassword(patientId: string, dto: UpdatePasswordDto) {

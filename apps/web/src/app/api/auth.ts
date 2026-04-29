@@ -52,6 +52,17 @@ export async function updatePassword(payload: { oldPassword: string; newPassword
   });
 }
 
+export async function deleteAccount(email: string): Promise<{ message: string }> {
+  const result = await apiRequest<{ message: string }>('/auth/account', {
+    method: 'DELETE',
+    auth: 'access',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  clearTokens();
+  return result;
+}
+
 export async function logout(): Promise<void> {
   const hasToken = getAccessToken();
   if (hasToken) {

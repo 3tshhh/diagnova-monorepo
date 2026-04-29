@@ -1,6 +1,7 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
+  DeleteAccountDto,
   ForgotPasswordLinkDto,
   LoginDto,
   RegisterDto,
@@ -63,5 +64,14 @@ export class AuthController {
     @Body() dto: UpdatePasswordDto,
   ) {
     return this.authService.updatePassword(patient.id, dto);
+  }
+
+  @Delete('account')
+  @UseGuards(AuthGuard)
+  deleteAccount(
+    @CurrentPatient() patient: { id: string },
+    @Body() dto: DeleteAccountDto,
+  ) {
+    return this.authService.deleteAccount(patient.id, dto);
   }
 }
