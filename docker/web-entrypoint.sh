@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+cat > /usr/share/nginx/html/team-config.js << EOF
+window.__TEAM__ = {
+  TEAM_1_LINKEDIN: "${VITE_TEAM_1_LINKEDIN}",
+  TEAM_1_PHOTO: "${VITE_TEAM_1_PHOTO}",
+  TEAM_2_LINKEDIN: "${VITE_TEAM_2_LINKEDIN}",
+  TEAM_2_PHOTO: "${VITE_TEAM_2_PHOTO}",
+  TEAM_3_LINKEDIN: "${VITE_TEAM_3_LINKEDIN}",
+  TEAM_3_PHOTO: "${VITE_TEAM_3_PHOTO}",
+  TEAM_4_LINKEDIN: "${VITE_TEAM_4_LINKEDIN}",
+  TEAM_4_PHOTO: "${VITE_TEAM_4_PHOTO}",
+  TEAM_5_LINKEDIN: "${VITE_TEAM_5_LINKEDIN}",
+  TEAM_5_PHOTO: "${VITE_TEAM_5_PHOTO}",
+  TEAM_6_LINKEDIN: "${VITE_TEAM_6_LINKEDIN}",
+  TEAM_6_PHOTO: "${VITE_TEAM_6_PHOTO}",
+};
+EOF
+
+exec nginx -g "daemon off;"
