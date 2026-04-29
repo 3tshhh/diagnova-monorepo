@@ -26,8 +26,8 @@ export class PatientCase {
   @Column({ name: 'case_type', type: 'enum', enum: CaseType })
   caseType!: CaseType;
 
-  @Column({ name: 'clinic_description', type: 'text' })
-  clinicDescription!: string;
+  @Column({ name: 'clinic_description', type: 'text', nullable: true })
+  clinicDescription!: string | null;
 
   @Column({ name: 'xray_url', type: 'varchar', length: 500 })
   xrayUrl!: string;

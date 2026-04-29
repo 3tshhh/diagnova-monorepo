@@ -32,7 +32,7 @@ export type DiagnosisResponse = {
 export type PatientCaseResponse = {
   id: string;
   caseType: CaseType;
-  clinicDescription: string;
+  clinicDescription: string | null;
   xrayUrl: string;
   diagnoses: DiagnosisResponse[];
   createdAt: string;

@@ -2,7 +2,7 @@ import { CaseType, DiagnosisStatus } from './enums';
 
 export interface CreateCasePayload {
   case_type: CaseType;
-  clinic_description: string;
+  clinic_description?: string;
 }
 
 export interface CaseCreatedResponse {
@@ -21,7 +21,7 @@ export interface DiagnosisResponse {
 export interface PatientCaseResponse {
   id: string;
   caseType: CaseType;
-  clinicDescription: string;
+  clinicDescription: string | null;
   xrayUrl: string;
   diagnoses: DiagnosisResponse[];
   createdAt: string;

@@ -126,7 +126,7 @@ export class AuthService {
 
     await this.cacheManager.set(`pwd-reset:${tokenId}`, encryptedJwt, ttl);
 
-    const resetLink = `${process.env.APP_BASE_URL || 'http://localhost:3000'}/api/auth/reset-password/${tokenId}`;
+    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${tokenId}`;
     await sendEmail({
       to: email,
       subject: 'Reset your password',

@@ -23,7 +23,7 @@ class CompleteDiagnosisDto {
 @Controller('internal')
 export class InternalController {
   constructor(private readonly casesService: CasesService) {}
-
+//  /internal/diagnosis/:diagnosisId/complete
   @Post('diagnosis/:diagnosisId/complete')
   @HttpCode(200)
   async completeDiagnosis(
@@ -44,3 +44,4 @@ export class InternalController {
     return { ok: true };
   }
 }
+//python will call /internal/diagnosis/:diagnosisId/complete with x-internal-key header and body containing either finding or error

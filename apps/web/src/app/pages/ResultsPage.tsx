@@ -114,7 +114,13 @@ export function ResultsPage() {
         });
       },
       onError: () => {
-        setStreamError('Live updates disconnected. Refresh to check the latest result.');
+        setPatientCase((current) => {
+          const diagnosis = current?.diagnoses.find((d) => d.id === activeDiagnosisId);
+          if (diagnosis && diagnosis.status === 'pending') {
+            setStreamError('Live updates disconnected. Refresh to check the latest result.');
+          }
+          return current;
+        });
       },
     });
 

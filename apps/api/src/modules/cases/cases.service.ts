@@ -50,7 +50,7 @@ export class CasesService {
   async createCase(
     patient: Patient,
     caseType: CaseType,
-    clinicDescription: string,
+    clinicDescription: string | undefined,
     xrayKey: string,
   ) {
     const patientCase = this.caseRepo.create({
@@ -182,7 +182,7 @@ export class CasesService {
     const lines: string[] = [
       `Patient:             ${patientCase.patient.fullName ?? patientCase.patient.email}`,
       `Case Type:           ${patientCase.caseType}`,
-      `Clinic Description:  ${patientCase.clinicDescription}`,
+      `Clinic Description:  ${patientCase.clinicDescription ?? 'N/A'}`,
       `X-Ray URL:           ${presignedUrl}`,
       '',
       'Diagnoses:',
@@ -236,15 +236,30 @@ export class CasesService {
     const internalSecret =
       this.configService.get<string>('INTERNAL_SECRET') ?? '';
 
-    await this.httpService.axiosRef.post(
-      `${fastapiUrl}/analyze`,
-      {
-        diagnosis_id: diagnosisId,
-        case_type: caseType,
-        image_url: imageUrl,
-        callback_url: `${baseUrl}/api/internal/diagnosis/${diagnosisId}/complete`,
-      },
-      { headers: { 'x-internal-key': internalSecret } },
+    const callbackUrl = `${baseUrl}/api/internal/diagnosis/${diagnosisId}/complete`;
+
+    this.logger.log(
+      `Dispatching to FastAPI — diagnosisId=${diagnosisId} caseType=${caseType} fastapiUrl=${fastapiUrl} callbackUrl=${callbackUrl}`,
     );
+
+    try {
+      await this.httpService.axiosRef.post(
+        `${fastapiUrl}/analyze`,
+        {
+          diagnosis_id: diagnosisId,
+          case_type: caseType,
+          image_url: imageUrl,
+          callback_url: callbackUrl,
+        },
+        { headers: { 'x-internal-key': internalSecret } },
+      );
+      this.logger.log(`Dispatch succeeded — diagnosisId=${diagnosisId}`);
+    } catch (error) {
+      this.logger.error(
+        `Dispatch failed — diagnosisId=${diagnosisId} error=${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
   }
 }

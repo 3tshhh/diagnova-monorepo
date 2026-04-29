@@ -41,7 +41,7 @@ export function mapCaseToScanRow(patientCase: PatientCaseResponse): ScanRow {
       year: 'numeric',
     }),
     resultLabel: diagnosisToResultLabel(latest),
-    detail: latest?.finding ?? patientCase.clinicDescription,
+    detail: latest?.finding ?? patientCase.clinicDescription ?? '',
     caseId: patientCase.id,
     diagnosisId: latest?.id ?? null,
   };

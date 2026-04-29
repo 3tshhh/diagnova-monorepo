@@ -10,12 +10,12 @@ type Model = {
 };
 
 const TEAM = [
-  { name: 'Dr. Amara Okoye', role: 'Co-founder, Chief Medical Officer', initials: 'AO' },
-  { name: 'Rohan Chatterjee', role: 'Co-founder, ML Research Lead', initials: 'RC' },
-  { name: 'Dr. Lena Mikkelsen', role: 'Head of Clinical Validation', initials: 'LM' },
-  { name: 'Tomás Ferreira', role: 'Engineering Lead', initials: 'TF' },
-  { name: 'Hana Saito', role: 'Product Design', initials: 'HS' },
-  { name: 'Dr. Marcus Reyes', role: 'Radiology Advisor', initials: 'MR' },
+  { name: 'Karim Ashraf',   initials: 'KA', photo: import.meta.env.VITE_TEAM_1_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_1_LINKEDIN as string },
+  { name: 'Aya Fawzy',      initials: 'AF', photo: import.meta.env.VITE_TEAM_2_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_2_LINKEDIN as string },
+  { name: 'Shahd Ahmed',    initials: 'SA', photo: import.meta.env.VITE_TEAM_3_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_3_LINKEDIN as string },
+  { name: 'Jana Waleed',    initials: 'JW', photo: import.meta.env.VITE_TEAM_4_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_4_LINKEDIN as string },
+  { name: 'Sara Mohamed',   initials: 'SM', photo: import.meta.env.VITE_TEAM_5_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_5_LINKEDIN as string },
+  { name: 'Mohamed Hesham', initials: 'MH', photo: import.meta.env.VITE_TEAM_6_PHOTO as string, linkedin: import.meta.env.VITE_TEAM_6_LINKEDIN as string },
 ];
 
 const MODELS: Model[] = [
@@ -129,7 +129,14 @@ export function AboutPage() {
         }}
       >
         {TEAM.map((m) => (
-          <div key={m.name} className="card" style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <a
+            key={m.name}
+            href={m.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="card"
+            style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+          >
             <div
               style={{
                 width: 44,
@@ -143,15 +150,21 @@ export function AboutPage() {
                 justifyContent: 'center',
                 fontWeight: 600,
                 fontSize: 14,
+                overflow: 'hidden',
               }}
             >
-              {m.initials}
+              {m.photo
+                ? <img src={m.photo} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : m.initials}
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 500, fontSize: 14, letterSpacing: '-0.01em' }}>{m.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.role}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.5 }}><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+                LinkedIn
+              </div>
             </div>
-          </div>
+          </a>
         ))}
       </div>
 

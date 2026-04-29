@@ -104,11 +104,6 @@ export function UploadPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
-    if (!clinicDescription.trim()) {
-      setError('Please add a clinical description before running analysis.');
-      return;
-    }
-
     setError('');
     setLoading(true);
 
@@ -191,7 +186,7 @@ export function UploadPage() {
             <option>Bone Fracture</option>
           </select>
 
-          <label className="field-label">Clinical description</label>
+          <label className="field-label">Clinical description <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(optional)</span></label>
           <textarea
             className="input"
             rows={3}
@@ -316,11 +311,11 @@ export function UploadPage() {
             )}
             <button
               type="submit"
-              disabled={!file || loading || !clinicDescription.trim()}
+              disabled={!file || loading}
               className="btn btn-primary btn-lg"
               style={{
-                opacity: !file || loading || !clinicDescription.trim() ? 0.6 : 1,
-                cursor: !file || loading || !clinicDescription.trim() ? 'not-allowed' : 'pointer',
+                opacity: !file || loading ? 0.6 : 1,
+                cursor: !file || loading ? 'not-allowed' : 'pointer',
               }}
             >
               {loading ? (
