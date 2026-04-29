@@ -9,13 +9,14 @@ type Model = {
   tags: string[];
 };
 
+const t = window.__TEAM__;
 const TEAM = [
-  { name: 'Karim Ashraf',   initials: 'KA', photo: import.meta.env.VITE_TEAM_1_PHOTO, linkedin: import.meta.env.VITE_TEAM_1_LINKEDIN },
-  { name: 'Aya Fawzy',      initials: 'AF', photo: import.meta.env.VITE_TEAM_2_PHOTO, linkedin: import.meta.env.VITE_TEAM_2_LINKEDIN },
-  { name: 'Shahd Ahmed',    initials: 'SA', photo: import.meta.env.VITE_TEAM_3_PHOTO, linkedin: import.meta.env.VITE_TEAM_3_LINKEDIN },
-  { name: 'Jana Waleed',    initials: 'JW', photo: import.meta.env.VITE_TEAM_4_PHOTO, linkedin: import.meta.env.VITE_TEAM_4_LINKEDIN },
-  { name: 'Sara Mohamed',   initials: 'SM', photo: import.meta.env.VITE_TEAM_5_PHOTO, linkedin: import.meta.env.VITE_TEAM_5_LINKEDIN },
-  { name: 'Mohamed Hesham', initials: 'MH', photo: import.meta.env.VITE_TEAM_6_PHOTO, linkedin: import.meta.env.VITE_TEAM_6_LINKEDIN },
+  { name: 'Karim Ashraf',   initials: 'KA', photo: t?.TEAM_1_PHOTO ?? '', linkedin: t?.TEAM_1_LINKEDIN ?? '' },
+  { name: 'Aya Fawzy',      initials: 'AF', photo: t?.TEAM_2_PHOTO ?? '', linkedin: t?.TEAM_2_LINKEDIN ?? '' },
+  { name: 'Shahd Ahmed',    initials: 'SA', photo: t?.TEAM_3_PHOTO ?? '', linkedin: t?.TEAM_3_LINKEDIN ?? '' },
+  { name: 'Jana Waleed',    initials: 'JW', photo: t?.TEAM_4_PHOTO ?? '', linkedin: t?.TEAM_4_LINKEDIN ?? '' },
+  { name: 'Sara Mohamed',   initials: 'SM', photo: t?.TEAM_5_PHOTO ?? '', linkedin: t?.TEAM_5_LINKEDIN ?? '' },
+  { name: 'Mohamed Hesham', initials: 'MH', photo: t?.TEAM_6_PHOTO ?? '', linkedin: t?.TEAM_6_LINKEDIN ?? '' },
 ];
 
 const MODELS: Model[] = [

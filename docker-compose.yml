@@ -40,18 +40,6 @@ services:
       dockerfile: docker/web.Dockerfile
       args:
         VITE_API_BASE_URL: http://localhost:3000/api
-        VITE_TEAM_1_LINKEDIN: ${VITE_TEAM_1_LINKEDIN:-}
-        VITE_TEAM_1_PHOTO: ${VITE_TEAM_1_PHOTO:-}
-        VITE_TEAM_2_LINKEDIN: ${VITE_TEAM_2_LINKEDIN:-}
-        VITE_TEAM_2_PHOTO: ${VITE_TEAM_2_PHOTO:-}
-        VITE_TEAM_3_LINKEDIN: ${VITE_TEAM_3_LINKEDIN:-}
-        VITE_TEAM_3_PHOTO: ${VITE_TEAM_3_PHOTO:-}
-        VITE_TEAM_4_LINKEDIN: ${VITE_TEAM_4_LINKEDIN:-}
-        VITE_TEAM_4_PHOTO: ${VITE_TEAM_4_PHOTO:-}
-        VITE_TEAM_5_LINKEDIN: ${VITE_TEAM_5_LINKEDIN:-}
-        VITE_TEAM_5_PHOTO: ${VITE_TEAM_5_PHOTO:-}
-        VITE_TEAM_6_LINKEDIN: ${VITE_TEAM_6_LINKEDIN:-}
-        VITE_TEAM_6_PHOTO: ${VITE_TEAM_6_PHOTO:-}
     depends_on:
       - api
     ports:
