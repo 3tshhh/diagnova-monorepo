@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { PageHeader } from '../components/PageHeader';
 import { getProfile, removeProfilePhoto, saveProfilePhoto, updateProfile } from '../api/profile';
-import { updatePassword } from '../api/auth';
+import { deleteAccount, updatePassword } from '../api/auth';
 import { useAuthGuard } from '../api/useAuthGuard';
 import type { PatientProfile } from '../api/types';
 
@@ -34,6 +35,7 @@ function getInitials(name: string | null, email: string): string {
 
 export function ProfilePage() {
   useAuthGuard();
+  const navigate = useNavigate();
 
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
@@ -54,6 +56,11 @@ export function ProfilePage() {
   const [profileMessage, setProfileMessage] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteEmailInput, setDeleteEmailInput] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const deleteInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -170,6 +177,35 @@ export function ProfilePage() {
       setPasswordError(message);
     } finally {
       setSavingPassword(false);
+    }
+  };
+
+  const openDeleteModal = () => {
+    setDeleteEmailInput('');
+    setDeleteError('');
+    setShowDeleteModal(true);
+    setTimeout(() => deleteInputRef.current?.focus(), 50);
+  };
+
+  const onConfirmDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile) return;
+
+    if (deleteEmailInput.trim().toLowerCase() !== profile.email.toLowerCase()) {
+      setDeleteError('Email does not match your account email.');
+      return;
+    }
+
+    setDeletingAccount(true);
+    setDeleteError('');
+
+    try {
+      await deleteAccount(deleteEmailInput.trim());
+      navigate('/login');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to delete account';
+      setDeleteError(message);
+      setDeletingAccount(false);
     }
   };
 
@@ -509,6 +545,89 @@ export function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <div className="card" style={{ padding: 28, marginTop: 20, borderColor: 'var(--danger)', borderWidth: 1, borderStyle: 'solid' }}>
+        <h3 style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.015em', margin: '0 0 4px', color: 'var(--danger)' }}>
+          Danger zone
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px' }}>
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </p>
+        <button
+          type="button"
+          className="btn btn-danger-ghost"
+          onClick={openDeleteModal}
+        >
+          Remove account
+        </button>
+      </div>
+
+      {showDeleteModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 16,
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget && !deletingAccount) setShowDeleteModal(false); }}
+        >
+          <div
+            className="card"
+            style={{ padding: 28, width: '100%', maxWidth: 440 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 8px', color: 'var(--danger)' }}>
+              Delete account
+            </h3>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px', lineHeight: 1.6 }}>
+              This will permanently delete your account, all your cases, diagnoses, and images. There is no way to recover this data.
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text)', margin: '0 0 12px', fontWeight: 500 }}>
+              Type your email address to confirm:
+            </p>
+            <form onSubmit={(e) => void onConfirmDeleteAccount(e)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <input
+                ref={deleteInputRef}
+                className="input"
+                type="email"
+                placeholder={profile?.email}
+                value={deleteEmailInput}
+                onChange={(e) => { setDeleteEmailInput(e.target.value); setDeleteError(''); }}
+                disabled={deletingAccount}
+                autoComplete="off"
+              />
+              {deleteError && (
+                <div style={{ fontSize: 13, color: 'var(--danger)', background: 'var(--danger-50)', padding: '8px 12px', borderRadius: 8 }}>
+                  {deleteError}
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deletingAccount}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn"
+                  style={{ background: 'var(--danger)', color: '#fff', borderColor: 'var(--danger)' }}
+                  disabled={deletingAccount || !deleteEmailInput.trim()}
+                >
+                  {deletingAccount ? 'Deleting...' : 'Delete my account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @media (max-width: 880px) { .profile-grid { grid-template-columns: 1fr !important; } }
