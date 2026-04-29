@@ -97,6 +97,18 @@ jobs:
           sbom: false
           build-args: |
             VITE_API_BASE_URL=${{ env.PUBLIC_API_BASE_URL }}
+            VITE_TEAM_1_LINKEDIN=${{ vars.VITE_TEAM_1_LINKEDIN }}
+            VITE_TEAM_1_PHOTO=${{ vars.VITE_TEAM_1_PHOTO }}
+            VITE_TEAM_2_LINKEDIN=${{ vars.VITE_TEAM_2_LINKEDIN }}
+            VITE_TEAM_2_PHOTO=${{ vars.VITE_TEAM_2_PHOTO }}
+            VITE_TEAM_3_LINKEDIN=${{ vars.VITE_TEAM_3_LINKEDIN }}
+            VITE_TEAM_3_PHOTO=${{ vars.VITE_TEAM_3_PHOTO }}
+            VITE_TEAM_4_LINKEDIN=${{ vars.VITE_TEAM_4_LINKEDIN }}
+            VITE_TEAM_4_PHOTO=${{ vars.VITE_TEAM_4_PHOTO }}
+            VITE_TEAM_5_LINKEDIN=${{ vars.VITE_TEAM_5_LINKEDIN }}
+            VITE_TEAM_5_PHOTO=${{ vars.VITE_TEAM_5_PHOTO }}
+            VITE_TEAM_6_LINKEDIN=${{ vars.VITE_TEAM_6_LINKEDIN }}
+            VITE_TEAM_6_PHOTO=${{ vars.VITE_TEAM_6_PHOTO }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WEB }}:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WEB }}:latest
