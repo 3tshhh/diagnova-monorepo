@@ -20,7 +20,7 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE_URL = 'https://diagnova.duckdns.org/api';
+const API_BASE_URL = 'http://localhost:3000/api';
 let refreshPromise: Promise<boolean> | null = null;
 
 function redirectToLogin(): void {
