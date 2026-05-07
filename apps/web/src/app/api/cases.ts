@@ -2,9 +2,10 @@ import { apiRequest, getApiBaseUrl } from './client';
 import { getAccessToken } from './session';
 import { CaseType } from './types';
 import type { CaseCreatedResponse, DiagnosisResponse, PatientCaseResponse } from './types';
+import i18n from '../../i18n';
 
-export function uiScanTypeToCaseType(scanType: 'Lung X-Ray' | 'Bone Fracture'): CaseType {
-  return scanType === 'Lung X-Ray' ? CaseType.LUNG : CaseType.BONE_FRACTURE;
+export function uiScanTypeToCaseType(scanType: string): CaseType {
+  return scanType === i18n.t('common.scanTypes.lung') ? CaseType.LUNG : CaseType.BONE_FRACTURE;
 }
 
 export async function createCase(payload: {

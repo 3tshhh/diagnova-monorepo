@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
 import { PageHeader } from '../components/PageHeader';
+import { useLangNavigate } from '../hooks/useLang';
 import { getProfile, removeProfilePhoto, saveProfilePhoto, updateProfile } from '../api/profile';
 import { deleteAccount, updatePassword } from '../api/auth';
 import { useAuthGuard } from '../api/useAuthGuard';
 import type { PatientProfile } from '../api/types';
+import { useTranslation } from 'react-i18next';
 
-const GENDER_OPTIONS = ['N/A', 'Male', 'Female', 'Other'] as const;
+
+
 
 type ProfileForm = {
   fullName: string;
@@ -17,14 +19,14 @@ type ProfileForm = {
   gender: string;
 };
 
-function toForm(profile: PatientProfile): ProfileForm {
+function toForm(profile: PatientProfile, notAvailable: string): ProfileForm {
   return {
     fullName: profile.fullName ?? '',
     phoneNumber: profile.phoneNumber ?? '',
     address: profile.address ?? '',
     age: profile.age === null ? '' : String(profile.age),
     nationalId: profile.nationalId ?? '',
-    gender: profile.gender ?? 'N/A',
+    gender: profile.gender ?? notAvailable,
   };
 }
 
@@ -38,8 +40,10 @@ function getInitials(name: string | null, email: string): string {
 }
 
 export function ProfilePage() {
+  const { t } = useTranslation();
+  const GENDER_OPTIONS = t('profile.genderOptions', { returnObjects: true }) as string[];
   useAuthGuard();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
 
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
@@ -49,7 +53,7 @@ export function ProfilePage() {
     address: '',
     age: '',
     nationalId: '',
-    gender: 'N/A',
+    gender: t('common.fallbacks.notAvailable'),
   });
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
   const [loading, setLoading] = useState(true);
@@ -72,9 +76,9 @@ export function ProfilePage() {
       try {
         const data = await getProfile();
         setProfile(data);
-        setForm(toForm(data));
+        setForm(toForm(data, t('common.fallbacks.notAvailable')));
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unable to load profile';
+        const message = err instanceof Error ? err.message : t('errors.unableToLoadProfile');
         setError(message);
       } finally {
         setLoading(false);
@@ -85,7 +89,7 @@ export function ProfilePage() {
   }, []);
 
   const initials = useMemo(() => {
-    if (!profile) return 'NA';
+    if (!profile) return t('common.fallbacks.notAvailable');
     return getInitials(profile.fullName, profile.email);
   }, [profile]);
 
@@ -101,7 +105,7 @@ export function ProfilePage() {
       setProfile({ ...profile, photoUrl: response.photoUrl });
       setProfileMessage(response.message);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to upload photo';
+      const message = err instanceof Error ? err.message : t('errors.unableToUploadPhoto');
       setError(message);
     } finally {
       setUploadingPhoto(false);
@@ -126,11 +130,11 @@ export function ProfilePage() {
       });
 
       setProfile(updated);
-      setForm(toForm(updated));
+      setForm(toForm(updated, t('common.fallbacks.notAvailable')));
       setEditing(false);
-      setProfileMessage('Profile updated successfully.');
+      setProfileMessage(t('messages.profileUpdated'));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to save profile';
+      const message = err instanceof Error ? err.message : t('errors.unableToSaveProfile');
       setError(message);
     } finally {
       setSavingProfile(false);
@@ -149,7 +153,7 @@ export function ProfilePage() {
       setProfile({ ...profile, photoUrl: response.photoUrl });
       setProfileMessage(response.message);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to remove photo';
+      const message = err instanceof Error ? err.message : t('errors.unableToRemovePhoto');
       setError(message);
     } finally {
       setRemovingPhoto(false);
@@ -159,11 +163,11 @@ export function ProfilePage() {
   const onSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pw.current || !pw.next || !pw.confirm) {
-      setPasswordError('Please complete all password fields.');
+      setPasswordError(t('errors.validationCompleteAllPasswordFields'));
       return;
     }
     if (pw.next !== pw.confirm) {
-      setPasswordError('New passwords do not match.');
+      setPasswordError(t('errors.validationNewPasswordsDoNotMatch'));
       return;
     }
 
@@ -179,7 +183,7 @@ export function ProfilePage() {
       setPasswordMessage(response.message);
       setPw({ current: '', next: '', confirm: '' });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to update password';
+      const message = err instanceof Error ? err.message : t('errors.unableToUpdatePassword');
       setPasswordError(message);
     } finally {
       setSavingPassword(false);
@@ -198,7 +202,7 @@ export function ProfilePage() {
     if (!profile) return;
 
     if (deleteEmailInput.trim().toLowerCase() !== profile.email.toLowerCase()) {
-      setDeleteError('Email does not match your account email.');
+      setDeleteError(t('errors.deleteEmailMismatch'));
       return;
     }
 
@@ -209,7 +213,7 @@ export function ProfilePage() {
       await deleteAccount(deleteEmailInput.trim());
       navigate('/login');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to delete account';
+      const message = err instanceof Error ? err.message : t('errors.unableToDeleteAccount');
       setDeleteError(message);
       setDeletingAccount(false);
     }
@@ -217,7 +221,7 @@ export function ProfilePage() {
 
   const cancelEditing = () => {
     if (!profile) return;
-    setForm(toForm(profile));
+    setForm(toForm(profile, t('common.fallbacks.notAvailable')));
     setEditing(false);
     setError('');
     setProfileMessage('');
@@ -234,9 +238,9 @@ export function ProfilePage() {
   if (!profile) {
     return (
       <div className="fade-up">
-        <PageHeader eyebrow="Account" title="Profile" sub="Manage your personal info and credentials." />
+        <PageHeader eyebrow={t('profile.pageEyebrow')} title={t('profile.pageTitle')} sub={t('profile.pageSub')} />
         <div className="card" style={{ padding: 24, color: 'var(--danger)' }}>
-          {error || 'Unable to load profile.'}
+          {error || t('errors.unableToLoadProfile')}
         </div>
       </div>
     );
@@ -244,7 +248,7 @@ export function ProfilePage() {
 
   return (
     <div className="fade-up">
-      <PageHeader eyebrow="Account" title="Profile" sub="Manage your personal info and credentials." />
+      <PageHeader eyebrow={t('profile.pageEyebrow')} title={t('profile.pageTitle')} sub={t('profile.pageSub')} />
 
       <div
         style={{ display: 'grid', gridTemplateColumns: '320px minmax(0, 1fr)', gap: 20 }}
@@ -286,19 +290,19 @@ export function ProfilePage() {
             </div>
           )}
           <h3 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.015em', margin: '0 0 4px' }}>
-            {profile.fullName || 'Diagnova user'}
+            {profile.fullName || t('common.fallbacks.appUser')}
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 4px' }}>{profile.email}</p>
           <p className="mono" style={{ fontSize: 11, color: 'var(--text-subtle)', margin: 0 }}>
-            Joined {new Date(profile.createdAt).getFullYear()}
+            {t('profile.joined', { year: new Date(profile.createdAt).getFullYear() })}
           </p>
           <div style={{ height: 1, background: 'var(--border)', margin: '20px 0' }} />
           <label className="btn btn-outline" style={{ width: '100%', cursor: uploadingPhoto ? 'wait' : 'pointer' }}>
-            {uploadingPhoto ? 'Uploading photo...' : profile.photoUrl ? 'Update photo' : 'Upload photo'}
+            {uploadingPhoto ? t('profile.uploadingPhoto') : profile.photoUrl ? t('common.actions.updatePhoto') : t('common.actions.uploadPhoto')}
             <input
               type="file"
               accept="image/*"
-              hidden
+              hidden 
               disabled={uploadingPhoto}
               onChange={(e) => void onPhotoSelected(e.target.files?.[0])}
             />
@@ -311,7 +315,7 @@ export function ProfilePage() {
               onClick={() => void onRemovePhoto()}
               disabled={removingPhoto}
             >
-              {removingPhoto ? 'Removing photo...' : 'Remove photo'}
+              {removingPhoto ? t('profile.removingPhoto') : t('common.actions.remove')}
             </button>
           )}
           <div
@@ -326,27 +330,27 @@ export function ProfilePage() {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-              <span>Phone</span>
+              <span>{t('fields.phone')}</span>
               <span className="mono" style={{ color: 'var(--text)' }}>
-                {profile.phoneNumber || 'Not set'}
+                {profile.phoneNumber || t('common.fallbacks.notSet')}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-              <span>Age</span>
+              <span>{t('fields.age')}</span>
               <span className="mono" style={{ color: 'var(--text)' }}>
-                {profile.age ?? 'Not set'}
+                {profile.age ?? t('common.fallbacks.notSet')}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-              <span>Gender</span>
+              <span>{t('fields.gender')}</span>
               <span className="mono" style={{ color: 'var(--text)' }}>
-                {profile.gender || 'N/A'}
+                {profile.gender || t('common.fallbacks.notAvailable')}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-              <span>National ID</span>
+              <span>{t('fields.nationalId')}</span>
               <span className="mono" style={{ color: 'var(--text)' }}>
-                {profile.nationalId || 'Not set'}
+                {profile.nationalId || t('common.fallbacks.notSet')}
               </span>
             </div>
           </div>
@@ -365,14 +369,14 @@ export function ProfilePage() {
             >
               <div>
                 <h3 style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.015em', margin: 0 }}>
-                  Personal info
+                  {t('profile.personalInfo')}
                 </h3>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                  Saved to your account and used across the app shell.
+                  {t('profile.personalInfoSub')}
                 </p>
               </div>
               <button type="button" onClick={() => setEditing((value) => !value)} className="btn btn-outline btn-sm">
-                {editing ? 'Stop editing' : 'Edit profile'}
+                {editing ? t('common.actions.stopEditing') : t('common.actions.editProfile')}
               </button>
             </div>
 
@@ -408,7 +412,7 @@ export function ProfilePage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label className="field-label">Full name</label>
+                <label className="field-label">{t('fields.fullName')}</label>
                 <input
                   className="input"
                   disabled={!editing}
@@ -418,11 +422,11 @@ export function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="field-label">Email</label>
+                <label className="field-label">{t('fields.email')}</label>
                 <input className="input" disabled value={profile.email} style={{ background: '#FAFCFC' }} />
               </div>
               <div>
-                <label className="field-label">Phone number</label>
+                <label className="field-label">{t('fields.phoneNumber')}</label>
                 <input
                   className="input"
                   disabled={!editing}
@@ -432,7 +436,7 @@ export function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="field-label">Age</label>
+                <label className="field-label">{t('fields.age')}</label>
                 <input
                   className="input"
                   type="number"
@@ -445,7 +449,7 @@ export function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="field-label">Gender</label>
+                <label className="field-label">{t('fields.gender')}</label>
                 <select
                   className="input"
                   disabled={!editing}
@@ -459,7 +463,7 @@ export function ProfilePage() {
                 </select>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="field-label">Address</label>
+                <label className="field-label">{t('fields.address')}</label>
                 <input
                   className="input"
                   disabled={!editing}
@@ -469,7 +473,7 @@ export function ProfilePage() {
                 />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label className="field-label">National ID</label>
+                <label className="field-label">{t('fields.nationalId')}</label>
                 <input
                   className="input"
                   disabled={!editing}
@@ -483,10 +487,10 @@ export function ProfilePage() {
             {editing && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
                 <button type="button" onClick={cancelEditing} className="btn btn-outline">
-                  Cancel
+                  {t('common.actions.cancel')}
                 </button>
                 <button type="button" onClick={() => void onSaveProfile()} className="btn btn-primary" disabled={savingProfile}>
-                  {savingProfile ? 'Saving...' : 'Save changes'}
+                  {savingProfile ? t('common.actions.saving') : t('common.actions.saveChanges')}
                 </button>
               </div>
             )}
@@ -494,40 +498,40 @@ export function ProfilePage() {
 
           <div className="card" style={{ padding: 28 }}>
             <h3 style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.015em', margin: '0 0 4px' }}>
-              Change password
+              {t('profile.changePassword')}
             </h3>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px' }}>
-              Use at least 8 characters with a mix of letters, numbers, and symbols.
+              {t('profile.passwordHint')}
             </p>
 
             <form onSubmit={onSavePassword} style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 480 }}>
               <div>
-                <label className="field-label">Current password</label>
+                <label className="field-label">{t('fields.currentPassword')}</label>
                 <input
                   className="input"
                   type="password"
-                  placeholder="........"
+                  placeholder={t('placeholders.password')}
                   value={pw.current}
                   onChange={(e) => setPw({ ...pw, current: e.target.value })}
                 />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label className="field-label">New password</label>
+                    <label className="field-label">{t('fields.newPassword')}</label>
                   <input
                     className="input"
                     type="password"
-                    placeholder="........"
+                      placeholder={t('placeholders.password')}
                     value={pw.next}
                     onChange={(e) => setPw({ ...pw, next: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="field-label">Confirm</label>
+                    <label className="field-label">{t('fields.confirm')}</label>
                   <input
                     className="input"
                     type="password"
-                    placeholder="........"
+                      placeholder={t('placeholders.password')}
                     value={pw.confirm}
                     onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
                   />
@@ -564,7 +568,7 @@ export function ProfilePage() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
                 <button className="btn btn-primary" disabled={savingPassword}>
-                  {savingPassword ? 'Saving...' : 'Save password'}
+                  {savingPassword ? t('common.actions.saving') : t('common.actions.savePassword')}
                 </button>
               </div>
             </form>
@@ -574,17 +578,17 @@ export function ProfilePage() {
 
       <div className="card" style={{ padding: 28, marginTop: 20, borderColor: 'var(--danger)', borderWidth: 1, borderStyle: 'solid' }}>
         <h3 style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.015em', margin: '0 0 4px', color: 'var(--danger)' }}>
-          Danger zone
+          {t('profile.dangerZone')}
         </h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px' }}>
-          Permanently delete your account and all associated data. This action cannot be undone.
+          {t('profile.dangerText')}
         </p>
         <button
           type="button"
           className="btn btn-danger-ghost"
           onClick={openDeleteModal}
         >
-          Remove account
+          {t('profile.removeAccount')}
         </button>
       </div>
 
@@ -608,13 +612,13 @@ export function ProfilePage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 8px', color: 'var(--danger)' }}>
-              Delete account
+              {t('profile.deleteAccount')}
             </h3>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px', lineHeight: 1.6 }}>
-              This will permanently delete your account, all your cases, diagnoses, and images. There is no way to recover this data.
+              {t('profile.deleteWarning')}
             </p>
             <p style={{ fontSize: 13, color: 'var(--text)', margin: '0 0 12px', fontWeight: 500 }}>
-              Type your email address to confirm:
+              {t('profile.deleteConfirm')}
             </p>
             <form onSubmit={(e) => void onConfirmDeleteAccount(e)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <input
@@ -639,7 +643,7 @@ export function ProfilePage() {
                   onClick={() => setShowDeleteModal(false)}
                   disabled={deletingAccount}
                 >
-                  Cancel
+                  {t('common.actions.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -647,7 +651,7 @@ export function ProfilePage() {
                   style={{ background: 'var(--danger)', color: '#fff', borderColor: 'var(--danger)' }}
                   disabled={deletingAccount || !deleteEmailInput.trim()}
                 >
-                  {deletingAccount ? 'Deleting...' : 'Delete my account'}
+                  {deletingAccount ? t('common.actions.deleting') : t('common.actions.deleteMyAccount')}
                 </button>
               </div>
             </form>

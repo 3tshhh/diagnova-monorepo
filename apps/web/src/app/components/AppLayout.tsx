@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 import { Wordmark } from './Wordmark';
 import { Icon, type IconName } from './Icon';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { LangLink, useLangNavigate } from '../hooks/useLang';
 import { getProfile } from '../api/profile';
 import { logout } from '../api/auth';
 import type { PatientProfile } from '../api/types';
+import { useTranslation } from 'react-i18next';
 
 type NavItem = {
   to: string;
@@ -12,13 +15,7 @@ type NavItem = {
   icon: IconName;
 };
 
-const NAV_ITEMS: NavItem[] = [
-  { to: '/app', label: 'Home', icon: 'layout-dashboard' },
-  { to: '/app/upload', label: 'Upload Scan', icon: 'upload-cloud' },
-  { to: '/app/history', label: 'Scan History', icon: 'history' },
-  { to: '/app/profile', label: 'Profile', icon: 'user' },
-  { to: '/app/about', label: 'About', icon: 'info' },
-];
+
 
 function getInitials(profile: PatientProfile | null): string {
   const source = (profile?.fullName || profile?.email || 'Diagnova').trim();
@@ -30,11 +27,21 @@ function getInitials(profile: PatientProfile | null): string {
 }
 
 export function AppLayout() {
-  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const navigate = useLangNavigate();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
+
+
+  const NAV_ITEMS: NavItem[] = [
+    { to: '/app', label: t('layout.navItems.home'), icon: 'layout-dashboard' },
+    { to: '/app/upload', label: t('layout.navItems.upload'), icon: 'upload-cloud' },
+    { to: '/app/history', label: t('layout.navItems.history'), icon: 'history' },
+    { to: '/app/profile', label: t('layout.navItems.profile'), icon: 'user' },
+    { to: '/app/about', label: t('layout.navItems.about'), icon: 'info' },
+  ];
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 1024);
@@ -61,10 +68,10 @@ export function AppLayout() {
   }, []);
 
   const initials = useMemo(() => getInitials(profile), [profile]);
-  const displayName = profile?.fullName || 'Diagnova user';
-  const displayMeta = profile?.email || 'Signed in';
+  const displayName = profile?.fullName || t('common.fallbacks.appUser');
+  const displayMeta = profile?.email || t('common.fallbacks.signedIn');
 
-  const isActive = (to: string) => (to === '/app' ? pathname === '/app' : pathname.startsWith(to));
+  const isActive = (to: string) => (to === '/app' ? pathname.endsWith('/app') : pathname.includes(to.slice(1)));
 
   const handleLogout = async () => {
     await logout();
@@ -106,16 +113,16 @@ export function AppLayout() {
           }}
           className="mono"
         >
-          Workspace
+          {t('layout.navSection')}
         </div>
         {NAV_ITEMS.map((item) => (
-          <Link key={item.to} to={item.to} className={'sb-link' + (isActive(item.to) ? ' active' : '')}>
+          <LangLink key={item.to} to={item.to} className={'sb-link' + (isActive(item.to) ? ' active' : '')}>
             <Icon name={item.icon} size={17} color="currentColor" />
             <span>{item.label}</span>
             {isActive(item.to) && (
               <Icon name="chevron-right" size={14} color="currentColor" style={{ marginLeft: 'auto', opacity: 0.6 }} />
             )}
-          </Link>
+          </LangLink>
         ))}
       </nav>
 
@@ -173,6 +180,8 @@ export function AppLayout() {
         </div>
       </div>
 
+      <LanguageSwitcher variant="sidebar" />
+
       <button
         type="button"
         onClick={() => void handleLogout()}
@@ -180,7 +189,7 @@ export function AppLayout() {
         style={{ color: 'rgba(255,255,255,0.7)', background: 'transparent', textAlign: 'left' }}
       >
         <Icon name="log-out" size={17} color="currentColor" />
-        <span>Logout</span>
+        <span>{t('common.actions.logout')}</span>
       </button>
     </aside>
   );
@@ -205,7 +214,7 @@ export function AppLayout() {
               zIndex: 30,
             }}
           >
-            <button onClick={() => setMobileOpen(true)} className="btn btn-ghost btn-sm" aria-label="Open menu">
+            <button onClick={() => setMobileOpen(true)} className="btn btn-ghost btn-sm" aria-label={t('layout.mobileMenuLabel')}>
               <Icon name="menu" size={20} />
             </button>
             <Wordmark size="sm" />

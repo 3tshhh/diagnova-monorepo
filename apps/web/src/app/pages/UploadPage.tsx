@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
 import { PageHeader } from '../components/PageHeader';
 import { Icon, type IconName } from '../components/Icon';
+import { LangLink, useLangNavigate } from '../hooks/useLang';
 import { createCase, getMyCases, uiScanTypeToCaseType } from '../api/cases';
 import { mapCaseToScanRow } from '../api/view-models';
 import { useAuthGuard } from '../api/useAuthGuard';
-
+import { useTranslation } from 'react-i18next';
 type StatCard = {
   label: string;
   value: number;
@@ -16,10 +16,11 @@ type StatCard = {
 };
 
 export function UploadPage() {
+    const { t } = useTranslation();
   useAuthGuard();
 
-  const navigate = useNavigate();
-  const [scanType, setScanType] = useState<'Lung X-Ray' | 'Bone Fracture'>('Lung X-Ray');
+  const navigate = useLangNavigate();
+  const [scanType, setScanType] = useState<string>(t('common.scanTypes.lung'));
   const [file, setFile] = useState<File | null>(null);
   const [clinicDescription, setClinicDescription] = useState('');
   const [drag, setDrag] = useState(false);
@@ -38,12 +39,12 @@ export function UploadPage() {
         const rows = cases.map(mapCaseToScanRow);
 
         const totalScans = rows.length;
-        const negativeScans = rows.filter((row) => row.resultLabel === 'Negative').length;
-        const positiveScans = rows.filter((row) => row.resultLabel === 'Positive').length;
+        const negativeScans = rows.filter((row) => row.resultLabel === t('common.resultLabels.negative')).length;
+        const positiveScans = rows.filter((row) => row.resultLabel === t('common.resultLabels.positive')).length;
 
         setStats([
           {
-            label: 'Total scans',
+            label: t('upload.stats.totalScans'),
             value: totalScans,
             icon: 'activity',
             color: 'var(--accent)',
@@ -51,7 +52,7 @@ export function UploadPage() {
             border: 'var(--border-strong)',
           },
           {
-            label: 'Negative',
+            label: t('upload.stats.negative'),
             value: negativeScans,
             icon: 'check-circle-2',
             color: '#047857',
@@ -59,7 +60,7 @@ export function UploadPage() {
             border: '#A7F3D0',
           },
           {
-            label: 'Positive',
+            label: t('upload.stats.positive'),
             value: positiveScans,
             icon: 'alert-circle',
             color: '#B45309',
@@ -71,7 +72,7 @@ export function UploadPage() {
         // Keep page usable even if stats fail.
         setStats([
           {
-            label: 'Total scans',
+            label: t('upload.stats.totalScans'),
             value: 0,
             icon: 'activity',
             color: 'var(--accent)',
@@ -79,7 +80,7 @@ export function UploadPage() {
             border: 'var(--border-strong)',
           },
           {
-            label: 'Negative',
+            label: t('upload.stats.negative'),
             value: 0,
             icon: 'check-circle-2',
             color: '#047857',
@@ -87,7 +88,7 @@ export function UploadPage() {
             border: '#A7F3D0',
           },
           {
-            label: 'Positive',
+            label: t('upload.stats.positive'),
             value: 0,
             icon: 'alert-circle',
             color: '#B45309',
@@ -116,7 +117,7 @@ export function UploadPage() {
 
       navigate(`/app/results/${created.case_id}/${created.diagnosis_id}`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to create case';
+      const message = err instanceof Error ? err.message : t('errors.unableToCreateCase');
       setError(message);
       setLoading(false);
     }
@@ -125,9 +126,9 @@ export function UploadPage() {
   return (
     <div className="fade-up">
       <PageHeader
-        eyebrow="New analysis"
-        title="Upload & scan"
-        sub="Select a study type and upload an image. Analysis takes about 8 seconds."
+        eyebrow={t('upload.eyebrow')}
+        title={t('upload.title')}
+        sub={t('upload.sub')}
       />
 
       <div
@@ -175,28 +176,28 @@ export function UploadPage() {
         className="upload-grid"
       >
         <div className="card" style={{ padding: 28 }}>
-          <label className="field-label">Scan type</label>
+          <label className="field-label">{t('fields.scanType')}</label>
           <select
             className="select"
             value={scanType}
-            onChange={(e) => setScanType(e.target.value as 'Lung X-Ray' | 'Bone Fracture')}
+            onChange={(e) => setScanType(e.target.value)}
             style={{ marginBottom: 24 }}
           >
-            <option>Lung X-Ray</option>
-            <option>Bone Fracture</option>
+            <option>{t('common.scanTypes.lung')}</option>
+            <option>{t('common.scanTypes.bone')}</option>
           </select>
 
-          <label className="field-label">Clinical description <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(optional)</span></label>
+          <label className="field-label">{t('fields.clinicalDescription')} <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>{t('fields.optional')}</span></label>
           <textarea
             className="input"
             rows={3}
             value={clinicDescription}
             onChange={(e) => setClinicDescription(e.target.value)}
-            placeholder="e.g., persistent cough and fever for 3 days"
+            placeholder={t('placeholders.clinicalDescription')}
             style={{ marginBottom: 24, resize: 'vertical' }}
           />
 
-          <label className="field-label">Image file</label>
+          <label className="field-label">{t('fields.imageFile')}</label>
           <div
             className={'dropzone' + (drag ? ' is-drag' : '')}
             onDragOver={(e) => {
@@ -237,9 +238,9 @@ export function UploadPage() {
                   <Icon name="upload-cloud" size={26} color="var(--accent)" />
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 4 }}>
-                  Drop your image here, or <span style={{ color: 'var(--accent)' }}>browse</span>
+                  {t('upload.dropPrompt')} <span style={{ color: 'var(--accent)' }}>{t('upload.browse')}</span>
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>JPG, PNG, or DICOM · up to 25MB</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{t('upload.fileHelp')}</div>
               </>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, justifyContent: 'center' }}>
@@ -255,7 +256,7 @@ export function UploadPage() {
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontWeight: 500, fontSize: 14 }}>{file.name}</div>
                   <div className="mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                    {(file.size / 1024).toFixed(0)} KB · ready
+                    {(file.size / 1024).toFixed(0)} KB · {t('upload.fileReady')}
                   </div>
                 </div>
                 <button
@@ -266,7 +267,7 @@ export function UploadPage() {
                   }}
                   className="btn btn-ghost btn-sm"
                 >
-                  <Icon name="x" size={14} /> Remove
+                  <Icon name="x" size={14} /> {t('common.actions.remove')}
                 </button>
               </div>
             )}
@@ -286,14 +287,14 @@ export function UploadPage() {
           >
             <Icon name="lock" size={16} color="var(--accent)" />
             <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              Images are encrypted in transit and processed in an isolated session.
+              {t('upload.privacy')}
             </span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}>
-            <Link to="/app" className="btn btn-outline">
-              Cancel
-            </Link>
+            <LangLink to="/app" className="btn btn-outline">
+              {t('common.actions.cancel')}
+            </LangLink>
             {error && (
               <div
                 style={{
@@ -320,11 +321,11 @@ export function UploadPage() {
             >
               {loading ? (
                 <>
-                  <span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Analyzing...
+                  <span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> {t('upload.analyzing')}
                 </>
               ) : (
                 <>
-                  Analyze <Icon name="sparkles" size={16} />
+                  {t('common.actions.analyze')} <Icon name="sparkles" size={16} />
                 </>
               )}
             </button>
@@ -334,7 +335,7 @@ export function UploadPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="card" style={{ padding: 20 }}>
             <div className="eyebrow" style={{ marginBottom: 10 }}>
-              Tips
+              {t('upload.tipsTitle')}
             </div>
             <ul
               style={{
@@ -345,22 +346,21 @@ export function UploadPage() {
                 lineHeight: 1.7,
               }}
             >
-              <li>Use the highest-resolution source available.</li>
-              <li>Crop tightly to the region of interest.</li>
-              <li>For chest X-ray, a PA view yields best results.</li>
-              <li>Strip patient identifiers before upload.</li>
+              {(t('upload.tips', { returnObjects: true }) as string[]).map((tip) => (
+  <li key={tip}>{tip}</li>
+))}
             </ul>
           </div>
 
           <div className="card" style={{ padding: 20 }}>
             <div className="eyebrow" style={{ marginBottom: 10 }}>
-              Selected model
+              {t('upload.selectedModel')}
             </div>
             <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 4 }}>
-              {scanType === 'Lung X-Ray' ? 'PulmoNet v3.1' : 'OssaNet v2.4'}
+              {scanType === t('common.scanTypes.lung') ? t('upload.models.lungName') : t('upload.models.boneName')}
             </div>
             <div className="mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              {scanType === 'Lung X-Ray' ? '14 thoracic pathologies' : '11 fracture classifications'}
+              {scanType === t('common.scanTypes.lung') ? t('upload.models.lungMeta') : t('upload.models.boneMeta')}
             </div>
           </div>
         </div>
@@ -381,9 +381,9 @@ export function UploadPage() {
         >
           <div className="card fade-up" style={{ padding: '36px 48px', textAlign: 'center', maxWidth: 360 }}>
             <div className="spinner" style={{ margin: '0 auto 18px' }} />
-            <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 6 }}>Analyzing your scan</div>
+            <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 6 }}>{t('upload.analyzingTitle')}</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)' }} className="mono">
-              {scanType === 'Lung X-Ray' ? 'PulmoNet v3.1' : 'OssaNet v2.4'} · processing
+              {scanType === t('common.scanTypes.lung') ? t('upload.models.lungName') : t('upload.models.boneName')} · {t('upload.processing')}
             </div>
           </div>
         </div>

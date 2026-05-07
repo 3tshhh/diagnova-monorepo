@@ -20,13 +20,16 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:3000/api';
+const API_BASE_URL = 'http://localhost:3000/api';
 let refreshPromise: Promise<boolean> | null = null;
 
 function redirectToLogin(): void {
   if (typeof window === 'undefined') return;
-  if (window.location.pathname !== '/login') {
-    window.location.assign('/login');
+  const match = window.location.pathname.match(/^\/(en|ar)(\/|$)/);
+  const lang = match ? match[1] : 'en';
+  const loginPath = `/${lang}/login`;
+  if (window.location.pathname !== loginPath) {
+    window.location.assign(loginPath);
   }
 }
 
@@ -34,7 +37,9 @@ async function parseError(response: Response): Promise<ApiError> {
   try {
     const payload = await response.json();
     const rawMessage = payload?.message;
-    const message = Array.isArray(rawMessage) ? rawMessage.join(', ') : rawMessage || payload?.error || 'Request failed';
+    const message = Array.isArray(rawMessage)
+      ? rawMessage.join(', ')
+      : rawMessage || payload?.error || 'Request failed';
     return new ApiError(String(message), response.status);
   } catch {
     return new ApiError(response.statusText || 'Request failed', response.status);

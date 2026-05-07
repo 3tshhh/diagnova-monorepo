@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router';
 import { PageHeader } from '../components/PageHeader';
 import { Icon } from '../components/Icon';
+import { LangLink } from '../hooks/useLang';
 import { getMyCases } from '../api/cases';
 import { mapCaseToScanRow } from '../api/view-models';
 import type { ScanRow } from '../api/view-models';
 import { useAuthGuard } from '../api/useAuthGuard';
+import { useTranslation } from 'react-i18next';
+import { ScanType } from '../data/scans';
 
 function ProgressBar({ pct, color }: { pct: number; color: string }) {
+  const { t } = useTranslation();
   return (
     <div style={{ height: 8, borderRadius: 999, background: '#EEF4F3', overflow: 'hidden' }}>
       <div
@@ -31,12 +34,13 @@ function AnalyticsDashboard(props: {
   lungPct: number;
   bonePct: number;
 }) {
+  const { t } = useTranslation();
   return (
     <div style={{ marginBottom: 28 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.015em', margin: 0 }}>Analytics dashboard</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.015em', margin: 0 }}>{t('history.analyticsTitle')}</h2>
         <span className="mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          Last 30 days
+          {t('history.range')}
         </span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }} className="analytics-grid">
@@ -56,12 +60,12 @@ function AnalyticsDashboard(props: {
             >
               <Icon name="pie-chart" size={16} color="var(--accent)" />
             </div>
-            <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em', margin: 0 }}>Results distribution</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em', margin: 0 }}>{t('history.distribution')}</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
-                <span style={{ color: 'var(--text)' }}>Negative results</span>
+                <span style={{ color: 'var(--text)' }}>{t('history.negativeResults')}</span>
                 <span className="mono" style={{ color: 'var(--text-muted)' }}>
                   {props.negPct}%
                 </span>
@@ -70,7 +74,7 @@ function AnalyticsDashboard(props: {
             </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
-                <span style={{ color: 'var(--text)' }}>Positive results</span>
+                <span style={{ color: 'var(--text)' }}>{t('history.positiveResults')}</span>
                 <span className="mono" style={{ color: 'var(--text-muted)' }}>
                   {props.posPct}%
                 </span>
@@ -96,12 +100,12 @@ function AnalyticsDashboard(props: {
             >
               <Icon name="bar-chart-3" size={16} color="var(--accent)" />
             </div>
-            <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em', margin: 0 }}>Scan types</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em', margin: 0 }}>{t('history.scanTypes')}</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
-                <span style={{ color: 'var(--text)' }}>Lung X-Ray</span>
+                <span style={{ color: 'var(--text)' }}>{t('common.scanTypes.lung')}</span>
                 <span className="mono" style={{ color: 'var(--text-muted)' }}>
                   {props.lungPct}%
                 </span>
@@ -110,7 +114,7 @@ function AnalyticsDashboard(props: {
             </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
-                <span style={{ color: 'var(--text)' }}>Bone fracture</span>
+                <span style={{ color: 'var(--text)' }}>{t('history.boneFracture')}</span>
                 <span className="mono" style={{ color: 'var(--text-muted)' }}>
                   {props.bonePct}%
                 </span>
@@ -136,7 +140,7 @@ function AnalyticsDashboard(props: {
             >
               <Icon name="trending-up" size={16} color="var(--accent)" />
             </div>
-            <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em', margin: 0 }}>Monthly statistics</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em', margin: 0 }}>{t('history.monthlyStats')}</h3>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div
@@ -159,7 +163,7 @@ function AnalyticsDashboard(props: {
               >
                 {props.total}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Total scans this month</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>{t('history.totalThisMonth')}</div>
             </div>
             <div
               style={{
@@ -181,7 +185,7 @@ function AnalyticsDashboard(props: {
               >
                 {props.negativeCount}
               </div>
-              <div style={{ fontSize: 12, color: '#047857', marginTop: 6 }}>Negative results</div>
+              <div style={{ fontSize: 12, color: '#047857', marginTop: 6 }}>{t('history.negativeResults')}</div>
             </div>
           </div>
         </div>
@@ -195,9 +199,10 @@ function AnalyticsDashboard(props: {
 }
 
 export function HistoryPage() {
+  const { t } = useTranslation();
   useAuthGuard();
 
-  const [filter, setFilter] = useState<'All' | 'Lung X-Ray' | 'Bone Fracture'>('All');
+  const [filter, setFilter] = useState<'All' | 'Lung X-Ray' | 'Bone Fracture'>(t('common.scanTypes.all') as 'All' | 'Lung X-Ray' | 'Bone Fracture');
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<ScanRow[]>([]);
   const [error, setError] = useState('');
@@ -208,7 +213,7 @@ export function HistoryPage() {
         const cases = await getMyCases();
         setRows(cases.map(mapCaseToScanRow));
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unable to load case history';
+        const message = err instanceof Error ? err.message : t('errors.unableToLoadHistory');
         setError(message);
       }
     };
@@ -217,16 +222,16 @@ export function HistoryPage() {
   }, []);
 
   const total = rows.length;
-  const negativeCount = rows.filter((s) => s.resultLabel === 'Negative').length;
-  const positiveCount = rows.filter((s) => s.resultLabel === 'Positive').length;
+  const negativeCount = rows.filter((s) => s.resultLabel === t('common.resultLabels.negative')).length;
+  const positiveCount = rows.filter((s) => s.resultLabel === t('common.resultLabels.positive')).length;
   const negPct = total ? Math.round((negativeCount / total) * 100) : 0;
   const posPct = total ? Math.round((positiveCount / total) * 100) : 0;
-  const lungCount = rows.filter((s) => s.typeLabel === 'Lung X-Ray').length;
+  const lungCount = rows.filter((s) => s.typeLabel === t('common.scanTypes.lung')).length;
   const bonePct = total ? Math.round(((total - lungCount) / total) * 100) : 0;
   const lungPct = total ? Math.round((lungCount / total) * 100) : 0;
 
   const filtered = useMemo(() => {
-    const byType = filter === 'All' ? rows : rows.filter((s) => s.typeLabel === filter);
+    const byType = filter === t('common.scanTypes.all') ? rows : rows.filter((s) => s.typeLabel === filter);
     if (!search.trim()) return byType;
 
     const keyword = search.trim().toLowerCase();
@@ -234,27 +239,27 @@ export function HistoryPage() {
   }, [filter, rows, search]);
 
   const getBadgeClass = (resultLabel: ScanRow['resultLabel']) => {
-    if (resultLabel === 'Positive' || resultLabel === 'Failed') return 'badge-positive';
-    if (resultLabel === 'Pending') return 'badge-neutral';
+    if (resultLabel === t('common.resultLabels.positive') || resultLabel === t('common.resultLabels.failed')) return 'badge-positive';
+    if (resultLabel === t('common.resultLabels.pending')) return 'badge-neutral';
     return 'badge-negative';
   };
 
   const getBadgeDotColor = (resultLabel: ScanRow['resultLabel']) => {
-    if (resultLabel === 'Positive' || resultLabel === 'Failed') return '#EF4444';
-    if (resultLabel === 'Pending') return 'var(--accent)';
+    if (resultLabel === t('common.resultLabels.positive') || resultLabel === t('common.resultLabels.failed')) return '#EF4444';
+    if (resultLabel === t('common.resultLabels.pending')) return 'var(--accent)';
     return '#10B981';
   };
 
   return (
     <div className="fade-up">
       <PageHeader
-        eyebrow="Studies"
-        title="Scan history"
-        sub={`${total} studies on record`}
+        eyebrow={t('history.eyebrow')}
+        title={t('history.title')}
+        sub={t('history.sub', { count: total })}
         actions={
-          <Link to="/app/upload" className="btn btn-primary">
-            <Icon name="plus" size={16} /> New scan
-          </Link>
+          <LangLink to="/app/upload" className="btn btn-primary">
+            <Icon name="plus" size={16} /> {t('common.actions.newScan')}
+          </LangLink>
         }
       />
 
@@ -268,10 +273,13 @@ export function HistoryPage() {
       />
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        {(['All', 'Lung X-Ray', 'Bone Fracture'] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
+{(Array.isArray(t('common.scanTypes', { returnObjects: true }))
+  ? t('common.scanTypes', { returnObjects: true }) as string[]
+  : []
+).map((f) => (
+  <button
+    key={f}
+    onClick={() => setFilter(f as ScanType)}
             className={'btn btn-sm ' + (filter === f ? 'btn-primary' : 'btn-outline')}
           >
             {f}
@@ -287,7 +295,7 @@ export function HistoryPage() {
           />
           <input
             className="input"
-            placeholder="Search by ID..."
+            placeholder={t('placeholders.searchById')}
             style={{ paddingLeft: 36, width: 260 }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -305,10 +313,10 @@ export function HistoryPage() {
         <table className="tbl">
           <thead>
             <tr>
-              <th>Scan type</th>
-              <th>Date</th>
-              <th>Diagnosis</th>
-              <th style={{ textAlign: 'right' }}>Action</th>
+              <th>{t('common.table.scanType')}</th>
+              <th>{t('common.table.date')}</th>
+              <th>{t('common.table.diagnosis')}</th>
+              <th style={{ textAlign: 'right' }}>{t('common.table.action')}</th>
             </tr>
           </thead>
           <tbody>
@@ -328,7 +336,7 @@ export function HistoryPage() {
                         border: '1px solid var(--border-strong)',
                       }}
                     >
-                      <Icon name={s.typeLabel === 'Lung X-Ray' ? 'wind' : 'bone'} size={16} color="var(--accent)" />
+                      <Icon name={s.typeLabel === t('common.scanTypes.lung') ? 'wind' : 'bone'} size={16} color="var(--accent)" />
                     </div>
                     <div>
                       <div style={{ fontWeight: 500 }}>{s.typeLabel}</div>
@@ -358,9 +366,9 @@ export function HistoryPage() {
                   </div>
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  <Link to={s.diagnosisId ? `/app/results/${s.caseId}/${s.diagnosisId}` : '/app/history'} className="btn btn-outline btn-sm">
-                    View
-                  </Link>
+                  <LangLink to={s.diagnosisId ? `/app/results/${s.caseId}/${s.diagnosisId}` : '/app/history'} className="btn btn-outline btn-sm">
+                    {t('common.actions.view')}
+                  </LangLink>
                 </td>
               </tr>
             ))}

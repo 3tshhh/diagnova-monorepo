@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { AuthShell } from '../components/AuthShell';
 import { Icon } from '../components/Icon';
+import { LangLink, useLangNavigate } from '../hooks/useLang';
 import { resetPassword } from '../api/auth';
+import { useTranslation } from 'react-i18next';
 
 export function ResetPasswordPage() {
-  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const navigate = useLangNavigate();
   const { tokenId = '' } = useParams();
   const [form, setForm] = useState({ password: '', confirm: '' });
   const [loading, setLoading] = useState(false);
@@ -15,15 +18,15 @@ export function ResetPasswordPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tokenId) {
-      setError('Reset token is missing.');
+      setError(t('errors.missingResetToken'));
       return;
     }
     if (!form.password) {
-      setError('Please enter a new password.');
+      setError(t('errors.passwordRequired'));
       return;
     }
     if (form.password !== form.confirm) {
-      setError('Passwords do not match.');
+      setError(t('errors.passwordsDoNotMatch'));
       return;
     }
 
@@ -32,10 +35,10 @@ export function ResetPasswordPage() {
 
     try {
       const response = await resetPassword(tokenId, form.password);
-      setMessage(response.message || 'Password updated successfully.');
+      setMessage(response.message || t('messages.passwordUpdated'));
       window.setTimeout(() => navigate('/login'), 1200);
     } catch (err) {
-      const text = err instanceof Error ? err.message : 'Unable to reset password';
+      const text = err instanceof Error ? err.message : t('errors.unableToResetPassword');
       setError(text);
     } finally {
       setLoading(false);
@@ -44,34 +47,34 @@ export function ResetPasswordPage() {
 
   return (
     <AuthShell
-      eyebrow="New password"
-      title="Set a fresh password for your workspace."
-      sub="Use at least 8 characters to complete your reset."
+      eyebrow={t('password.resetShellEyebrow')}
+      title={t('password.resetShellTitle')}
+      sub={t('password.resetShellSub')}
     >
       <h2 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', margin: '0 0 6px' }}>
-        Reset password
+        {t('password.resetTitle')}
       </h2>
       <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 24px' }}>
-        Choose a new password, then sign in again.
+        {t('password.resetSub')}
       </p>
 
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
-          <label className="field-label">New password</label>
+          <label className="field-label">{t('fields.newPassword')}</label>
           <input
             className="input"
             type="password"
-            placeholder="........"
+            placeholder={t('placeholders.password')}
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
         </div>
         <div>
-          <label className="field-label">Confirm password</label>
+          <label className="field-label">{t('fields.confirmPassword')}</label>
           <input
             className="input"
             type="password"
-            placeholder="........"
+            placeholder={t('placeholders.password')}
             value={form.confirm}
             onChange={(e) => setForm({ ...form, confirm: e.target.value })}
           />
@@ -106,7 +109,7 @@ export function ResetPasswordPage() {
         )}
 
         <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-          {loading ? 'Saving...' : 'Save password'} {!loading && <Icon name="arrow-right" size={16} />}
+          {loading ? t('common.actions.saving') : t('common.actions.savePassword')} {!loading && <Icon name="arrow-right" size={16} />}
         </button>
       </form>
 
@@ -122,13 +125,13 @@ export function ResetPasswordPage() {
           lineHeight: 1.6,
         }}
       >
-        Choose something unique to this account. Once updated, your old reset link will no longer work.
+        {t('password.resetHint')}
       </div>
 
       <div style={{ marginTop: 24, fontSize: 14 }}>
-        <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <Icon name="arrow-left" size={14} /> Back to login
-        </Link>
+        <LangLink to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="arrow-left" size={14} /> {t('common.actions.backToLogin')}
+        </LangLink>
       </div>
     </AuthShell>
   );

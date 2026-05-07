@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
 import { AuthShell } from '../components/AuthShell';
 import { Icon } from '../components/Icon';
+import { LangLink } from '../hooks/useLang';
 import { requestPasswordReset } from '../api/auth';
+import { useTranslation } from 'react-i18next';
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -13,17 +15,17 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthShell
-      eyebrow="Reset password"
-      title="Back into your workspace, fast."
-      sub="We'll email a secure link valid for 30 minutes."
+      eyebrow={t('password.forgotShellEyebrow')}
+      title={t('password.forgotShellTitle')}
+      sub={t('password.forgotShellSub')}
     >
       {!sent ? (
         <>
           <h2 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', margin: '0 0 6px' }}>
-            Forgot password
+            {t('password.forgotTitle')}
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 24px' }}>
-            Enter the email tied to your account and we'll send reset instructions.
+            {t('password.forgotSub')}
           </p>
           <form
             onSubmit={async (e) => {
@@ -36,7 +38,7 @@ export function ForgotPasswordPage() {
                 setMessage(response.message);
                 setSent(true);
               } catch (err) {
-                const text = err instanceof Error ? err.message : 'Unable to send reset link';
+                const text = err instanceof Error ? err.message : t('errors.unableToSendResetLink');
                 setError(text);
               } finally {
                 setLoading(false);
@@ -45,11 +47,11 @@ export function ForgotPasswordPage() {
             style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
           >
             <div>
-              <label className="field-label">Email</label>
+              <label className="field-label">{t('fields.email')}</label>
               <input
                 className="input"
                 type="email"
-                placeholder="jane@hospital.org"
+                placeholder={t('placeholders.email')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -69,13 +71,13 @@ export function ForgotPasswordPage() {
             )}
 
             <button type="submit" className="btn btn-primary btn-lg" style={{ marginTop: 6 }} disabled={loading}>
-              Send reset link <Icon name="send" size={16} />
+              {t('common.actions.sendResetLink')} <Icon name="send" size={16} />
             </button>
           </form>
           <div style={{ marginTop: 24, fontSize: 14 }}>
-            <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Icon name="arrow-left" size={14} /> Back to login
-            </Link>
+            <LangLink to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="arrow-left" size={14} /> {t('common.actions.backToLogin')}
+            </LangLink>
           </div>
         </>
       ) : (
@@ -97,14 +99,14 @@ export function ForgotPasswordPage() {
             <Icon name="mail-check" size={28} color="#047857" />
           </div>
           <h2 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', margin: '0 0 8px' }}>
-            Check your email
+            {t('password.checkEmailTitle')}
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.55, margin: 0 }}>
-            {message || 'We sent reset instructions'} to{' '}
+            {message || t('messages.resetInstructionsSent')} to{' '}
             <b style={{ color: 'var(--text)' }} className="mono">
-              {email || 'your inbox'}
+              {email || t('password.inboxFallback')}
             </b>
-            . The link expires in 30 minutes.
+            . {t('password.linkExpiry')}
           </p>
           <div
             style={{
@@ -117,16 +119,16 @@ export function ForgotPasswordPage() {
               color: 'var(--text-muted)',
             }}
           >
-            Didn't get it? Check spam, or{' '}
+            {t('password.retryPrompt')}{' '}
             <a onClick={() => setSent(false)} style={{ cursor: 'pointer' }}>
-              try a different email
+              {t('password.tryDifferentEmail')}
             </a>
             .
           </div>
           <div style={{ marginTop: 24 }}>
-            <Link to="/login" className="btn btn-outline">
-              <Icon name="arrow-left" size={14} /> Back to login
-            </Link>
+            <LangLink to="/login" className="btn btn-outline">
+              <Icon name="arrow-left" size={14} /> {t('common.actions.backToLogin')}
+            </LangLink>
           </div>
         </div>
       )}

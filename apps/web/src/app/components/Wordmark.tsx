@@ -1,4 +1,6 @@
 import { Logo } from './Logo';
+import { APP_COPY } from '../constants/copy';
+import { useTranslation } from 'react-i18next';
 
 type WordmarkProps = {
   light?: boolean;
@@ -6,6 +8,7 @@ type WordmarkProps = {
 };
 
 export function Wordmark({ light = false, size = 'md' }: WordmarkProps) {
+  const { t } = useTranslation();
   const dim = size === 'lg' ? 40 : size === 'sm' ? 24 : 32;
   const fontSize = size === 'lg' ? 24 : size === 'sm' ? 16 : 19;
   return (
@@ -19,7 +22,7 @@ export function Wordmark({ light = false, size = 'md' }: WordmarkProps) {
           color: light ? '#fff' : '#134E4A',
         }}
       >
-        Diagnova
+        {t('brand.name')}
       </span>
     </div>
   );
