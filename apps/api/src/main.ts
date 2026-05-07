@@ -15,6 +15,7 @@ async function bootstrap() {
       'http://localhost:80',
       'http://localhost:3000',
       'http://localhost:5173',
+      'https://diagnova.duckdns.org',
     ],
     credentials: true,
   });
