@@ -36,6 +36,7 @@ export function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
+      <Route path="/" element={<Navigate to="/en" replace />} />
       <Route path="*" element={<Navigate to="/en" replace />} />
     </Routes>
   );
