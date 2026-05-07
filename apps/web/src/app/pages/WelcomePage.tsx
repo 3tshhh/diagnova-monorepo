@@ -1,9 +1,16 @@
-import { Link } from 'react-router';
 import { Wordmark } from '../components/Wordmark';
 import { Icon } from '../components/Icon';
 import { HeroScanCard } from '../components/HeroScanCard';
+import { LangLink } from '../hooks/useLang';
+import { useTranslation } from 'react-i18next';
+
+const STEP_ICONS = ['upload-cloud', 'cpu', 'file-text'] as const;
 
 export function WelcomePage() {
+  const { t } = useTranslation();
+  const raw = t('welcome.stats', { returnObjects: true });
+  const stats = Array.isArray(raw) ? raw as { label: string; value: string }[] : [];
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <div
@@ -43,12 +50,12 @@ export function WelcomePage() {
         >
           <Wordmark light size="md" />
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link to="/login" className="btn btn-ghost" style={{ color: '#fff' }}>
-              Login
-            </Link>
-            <Link to="/signup" className="btn" style={{ background: '#fff', color: 'var(--primary)' }}>
-              Get Started <Icon name="arrow-right" size={16} />
-            </Link>
+            <LangLink to="/login" className="btn btn-ghost" style={{ color: '#fff' }}>
+              {t('common.actions.login')}
+            </LangLink>
+            <LangLink to="/signup" className="btn" style={{ background: '#fff', color: 'var(--primary)' }}>
+              {t('common.actions.getStarted')} <Icon name="arrow-right" size={16} />
+            </LangLink>
           </div>
         </div>
 
@@ -64,7 +71,7 @@ export function WelcomePage() {
           >
             <div>
               <div className="eyebrow" style={{ color: '#5EEAD4' }}>
-                AI-Powered Medical Imaging Analysis
+                {t('welcome.heroEyebrow')}
               </div>
               <h1
                 style={{
@@ -76,9 +83,9 @@ export function WelcomePage() {
                   color: '#fff',
                 }}
               >
-                Read radiographs<br />
+                {t('welcome.heroTitleLine1')}<br />
                 <span style={{ color: '#5EEAD4', fontStyle: 'italic', fontWeight: 500 }}>
-                  in seconds, not hours.
+                  {t('welcome.heroTitleLine2')}
                 </span>
               </h1>
               <p
@@ -90,34 +97,28 @@ export function WelcomePage() {
                   margin: 0,
                 }}
               >
-                Upload a chest X-ray or skeletal radiograph. Diagnova's deep-learning models surface findings — pneumonia, pleural effusion, fractures and more — so clinicians can spend more time on patients and less on the lightbox.
+                {t('welcome.heroBody')}
               </p>
               <div style={{ display: 'flex', gap: 12, marginTop: 32, flexWrap: 'wrap' }}>
-                <Link to="/signup" className="btn btn-lg" style={{ background: '#fff', color: 'var(--primary)' }}>
-                  Get Started <Icon name="arrow-right" size={18} />
-                </Link>
-                <Link
+                <LangLink to="/signup" className="btn btn-lg" style={{ background: '#fff', color: 'var(--primary)' }}>
+                  {t('common.actions.getStarted')} <Icon name="arrow-right" size={18} />
+                </LangLink>
+                <LangLink
                   to="/login"
                   className="btn btn-lg btn-ghost"
                   style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
                 >
-                  Login
-                </Link>
+                  {t('common.actions.login')}
+                </LangLink>
               </div>
               <div style={{ display: 'flex', gap: 24, marginTop: 40, flexWrap: 'wrap' }}>
-                {(
-                  [
-                    ['Cases reviewed', '1.2M+'],
-                    ['Pathologies', '14'],
-                    ['Avg. analysis', '< 8s'],
-                  ] as const
-                ).map(([k, v]) => (
-                  <div key={k}>
+                {stats.map((stat) => (
+                  <div key={stat.label}>
                     <div
                       className="mono"
                       style={{ fontSize: 24, color: '#fff', fontWeight: 500, letterSpacing: '-0.01em' }}
                     >
-                      {v}
+                      {stat.value}
                     </div>
                     <div
                       style={{
@@ -128,7 +129,7 @@ export function WelcomePage() {
                         marginTop: 4,
                       }}
                     >
-                      {k}
+                      {stat.label}
                     </div>
                   </div>
                 ))}
@@ -142,7 +143,7 @@ export function WelcomePage() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '88px 32px' }}>
         <div style={{ textAlign: 'center', marginBottom: 56 }}>
-          <div className="eyebrow">How It Works</div>
+          <div className="eyebrow">{t('welcome.howItWorksEyebrow')}</div>
           <h2
             style={{
               fontSize: 'clamp(28px, 3.5vw, 40px)',
@@ -152,7 +153,7 @@ export function WelcomePage() {
               textWrap: 'balance',
             }}
           >
-            Three steps from image to insight.
+            {t('welcome.howItWorksTitle')}
           </h2>
           <p
             style={{
@@ -163,7 +164,7 @@ export function WelcomePage() {
               lineHeight: 1.55,
             }}
           >
-            Designed to slot into any radiology workflow — clinic, hospital, or remote review.
+            {t('welcome.howItWorksSub')}
           </p>
         </div>
 
@@ -171,28 +172,10 @@ export function WelcomePage() {
           style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}
           className="steps-grid"
         >
-          {(
-            [
-              {
-                n: '01',
-                icon: 'upload-cloud' as const,
-                title: 'Upload your scan',
-                body: 'Drag and drop a DICOM, JPG, or PNG. We support chest X-rays and orthopedic radiographs in any common projection.',
-              },
-              {
-                n: '02',
-                icon: 'cpu' as const,
-                title: 'AI analyzes the image',
-                body: 'Two specialized convolutional models — one for thoracic disease, one for fracture detection — process the study end-to-end.',
-              },
-              {
-                n: '03',
-                icon: 'file-text' as const,
-                title: 'Get a structured report',
-                body: 'Receive a clean diagnostic summary with findings and location, exportable as a PDF for your records.',
-              },
-            ]
-          ).map((s, i) => (
+          {(Array.isArray(t('welcome.steps', { returnObjects: true }))
+  ? t('welcome.steps', { returnObjects: true }) as { n: string; title: string; body: string }[]
+  : []
+).map((s, i) => (
             <div key={s.n} className="card" style={{ padding: 28, position: 'relative' }}>
               <div
                 style={{
@@ -208,7 +191,7 @@ export function WelcomePage() {
                   border: '1px solid var(--border-strong)',
                 }}
               >
-                <Icon name={s.icon} size={22} color="var(--accent)" />
+                <Icon name={STEP_ICONS[i]} size={22} color="var(--accent)" />
               </div>
               <div
                 className="mono"
@@ -219,7 +202,7 @@ export function WelcomePage() {
                   marginBottom: 6,
                 }}
               >
-                STEP {s.n}
+                {t('welcome.stepPrefix')} {s.n}
               </div>
               <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 8px', letterSpacing: '-0.015em' }}>
                 {s.title}
@@ -257,23 +240,23 @@ export function WelcomePage() {
         >
           <div style={{ maxWidth: 560 }}>
             <h3 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', margin: '0 0 8px' }}>
-              Ready to run your first scan?
+              {t('welcome.ctaTitle')}
             </h3>
             <p style={{ color: 'rgba(255,255,255,0.75)', margin: 0, fontSize: 15 }}>
-              Free during research preview. No credit card required.
+              {t('welcome.ctaSub')}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <Link to="/signup" className="btn btn-lg" style={{ background: '#fff', color: 'var(--primary)' }}>
-              Create account
-            </Link>
-            <Link
+            <LangLink to="/signup" className="btn btn-lg" style={{ background: '#fff', color: 'var(--primary)' }}>
+              {t('common.actions.createAccount')}
+            </LangLink>
+            <LangLink
               to="/login"
               className="btn btn-lg btn-ghost"
               style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
             >
-              Login
-            </Link>
+              {t('common.actions.login')}
+            </LangLink>
           </div>
         </div>
 
@@ -291,7 +274,7 @@ export function WelcomePage() {
         >
           <Wordmark size="sm" />
           <div style={{ fontSize: 13, color: 'var(--text-muted)' }} className="mono">
-            © 2026 Diagnova Research · Not a substitute for professional medical advice
+            {t('welcome.footer')}
           </div>
         </div>
       </div>

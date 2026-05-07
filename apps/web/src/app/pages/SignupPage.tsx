@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
 import { AuthShell } from '../components/AuthShell';
 import { Icon } from '../components/Icon';
+import { LangLink, useLangNavigate } from '../hooks/useLang';
 import { register } from '../api/auth';
+import { useTranslation } from 'react-i18next';
 
 export function SignupPage() {
-  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const navigate = useLangNavigate();
   const [form, setForm] = useState({ name: '', email: '', pw: '', confirm: '' });
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
@@ -13,11 +15,11 @@ export function SignupPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.pw) {
-      setErr('Please complete all fields.');
+      setErr(t('errors.validationCompleteAllFields'));
       return;
     }
     if (form.pw !== form.confirm) {
-      setErr('Passwords do not match.');
+      setErr(t('errors.passwordsDoNotMatch'));
       return;
     }
 
@@ -32,7 +34,7 @@ export function SignupPage() {
       });
       navigate('/app/profile');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to create account';
+      const message = error instanceof Error ? error.message : t('errors.unableToCreateAccount');
       setErr(message);
     } finally {
       setLoading(false);
@@ -41,54 +43,54 @@ export function SignupPage() {
 
   return (
     <AuthShell
-      eyebrow="Create account"
-      title="Start reading scans with AI assist."
-      sub="Set up your Diagnova workspace. Free during research preview."
+      eyebrow={t('signup.shellEyebrow')}
+      title={t('signup.shellTitle')}
+      sub={t('signup.shellSub')}
     >
       <h2 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', margin: '0 0 6px' }}>
-        Create your account
+        {t('signup.title')}
       </h2>
       <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 24px' }}>
-        Already have one? <Link to="/login">Login</Link>
+        {t('signup.loginPrompt')} <LangLink to="/login">{t('common.actions.login')}</LangLink>
       </p>
 
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
-          <label className="field-label">Full name</label>
+          <label className="field-label">{t('fields.fullName')}</label>
           <input
             className="input"
-            placeholder="Dr. Jane Patel"
+            placeholder={t('placeholders.fullName')}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
         <div>
-          <label className="field-label">Work email</label>
+          <label className="field-label">{t('fields.workEmail')}</label>
           <input
             className="input"
             type="email"
-            placeholder="jane@hospital.org"
+            placeholder={t('placeholders.email')}
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
-            <label className="field-label">Password</label>
+            <label className="field-label">{t('fields.password')}</label>
             <input
               className="input"
               type="password"
-              placeholder="••••••••"
+              placeholder={t('placeholders.password')}
               value={form.pw}
               onChange={(e) => setForm({ ...form, pw: e.target.value })}
             />
           </div>
           <div>
-            <label className="field-label">Confirm</label>
+            <label className="field-label">{t('fields.confirm')}</label>
             <input
               className="input"
               type="password"
-              placeholder="••••••••"
+              placeholder={t('placeholders.password')}
               value={form.confirm}
               onChange={(e) => setForm({ ...form, confirm: e.target.value })}
             />
@@ -119,11 +121,11 @@ export function SignupPage() {
         >
           <input type="checkbox" defaultChecked style={{ marginTop: 2 }} />
           <span>
-            I agree to the <a>Terms of Service</a> and acknowledge Diagnova is a research tool, not a substitute for clinical judgment.
+            {t('signup.agreePrefix')} <a>{t('signup.terms')}</a> {t('signup.agreeSuffix')}
           </span>
         </label>
         <button type="submit" className="btn btn-primary btn-lg" style={{ marginTop: 6 }} disabled={loading}>
-          Create account <Icon name="arrow-right" size={16} />
+          {t('common.actions.createAccount')} <Icon name="arrow-right" size={16} />
         </button>
       </form>
     </AuthShell>

@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router';
 import { PageHeader } from '../components/PageHeader';
 import { Icon } from '../components/Icon';
+import { LangLink } from '../hooks/useLang';
 import { getMyCases } from '../api/cases';
 import { getProfile } from '../api/profile';
 import { mapCaseToScanRow } from '../api/view-models';
 import type { ScanRow } from '../api/view-models';
 import { useAuthGuard } from '../api/useAuthGuard';
+import { useTranslation } from 'react-i18next';
 
 export function HomePage() {
+  const { t } = useTranslation();
   useAuthGuard();
 
   const [rows, setRows] = useState<ScanRow[]>([]);
-  const [displayName, setDisplayName] = useState('Patient');
+  const [displayName, setDisplayName] = useState<string>(t('common.fallbacks.patient'));
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -21,9 +23,9 @@ export function HomePage() {
         const [cases, profile] = await Promise.all([getMyCases(), getProfile()]);
         setRows(cases.map(mapCaseToScanRow));
         const label = profile.fullName?.trim() || profile.email;
-        setDisplayName(label.split(/\s+/)[0] || 'Patient');
+        setDisplayName(label.split(/\s+/)[0] || t('common.fallbacks.patient'));
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unable to load cases';
+        const message = err instanceof Error ? err.message : t('errors.unableToLoadCases');
         setError(message);
       }
     };
@@ -33,8 +35,8 @@ export function HomePage() {
 
   const stats = useMemo(() => {
     const total = rows.length;
-    const positive = rows.filter((row) => row.resultLabel === 'Positive').length;
-    const pending = rows.filter((row) => row.resultLabel === 'Pending').length;
+    const positive = rows.filter((row) => row.resultLabel === t('common.resultLabels.positive')).length;
+    const pending = rows.filter((row) => row.resultLabel === t('common.resultLabels.pending')).length;
     const recentWeek = rows.filter((row) => {
       const ageMs = Date.now() - new Date(row.date).getTime();
       return ageMs < 7 * 24 * 60 * 60 * 1000;
@@ -56,27 +58,27 @@ export function HomePage() {
   }).format(new Date());
 
   const getBadgeClass = (resultLabel: ScanRow['resultLabel']) => {
-    if (resultLabel === 'Positive' || resultLabel === 'Failed') return 'badge-positive';
-    if (resultLabel === 'Pending') return 'badge-neutral';
+    if (resultLabel === t('common.resultLabels.positive') || resultLabel === t('common.resultLabels.failed')) return 'badge-positive';
+    if (resultLabel === t('common.resultLabels.pending')) return 'badge-neutral';
     return 'badge-negative';
   };
 
   const getBadgeDotColor = (resultLabel: ScanRow['resultLabel']) => {
-    if (resultLabel === 'Positive' || resultLabel === 'Failed') return '#EF4444';
-    if (resultLabel === 'Pending') return 'var(--accent)';
+    if (resultLabel === t('common.resultLabels.positive') || resultLabel === t('common.resultLabels.failed')) return '#EF4444';
+    if (resultLabel === t('common.resultLabels.pending')) return 'var(--accent)';
     return '#10B981';
   };
 
   return (
     <div className="fade-up">
       <PageHeader
-        eyebrow={`Workspace / ${todayLabel}`}
-        title={`Welcome back, ${displayName}.`}
-        sub={`You have ${stats.recentWeek} scans from this week. Start a new analysis or review history.`}
+        eyebrow={`${t('home.eyebrowPrefix')} / ${todayLabel}`}
+        title={t('home.title', { name: displayName })}
+        sub={t('home.sub', { count: stats.recentWeek })}
         actions={
-          <Link to="/app/upload" className="btn btn-primary">
-            <Icon name="plus" size={16} /> New scan
-          </Link>
+          <LangLink to="/app/upload" className="btn btn-primary">
+            <Icon name="plus" size={16} /> {t('common.actions.newScan')}
+          </LangLink>
         }
       />
 
@@ -88,7 +90,7 @@ export function HomePage() {
           marginBottom: 32,
         }}
       >
-        <Link
+        <LangLink
           to="/app/upload"
           className="card"
           style={{
@@ -117,10 +119,10 @@ export function HomePage() {
             <Icon name="upload-cloud" size={22} color="#fff" />
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.015em', margin: '0 0 6px' }}>
-            Start new scan
+            {t('home.startScanTitle')}
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: 0, lineHeight: 1.55 }}>
-            Upload a chest X-ray or skeletal radiograph for AI analysis.
+            {t('home.startScanBody')}
           </p>
           <Icon
             name="arrow-up-right"
@@ -128,8 +130,8 @@ export function HomePage() {
             color="var(--text-subtle)"
             style={{ position: 'absolute', top: 24, right: 24 }}
           />
-        </Link>
-        <Link
+        </LangLink>
+        <LangLink
           to="/app/history"
           className="card"
           style={{
@@ -157,10 +159,10 @@ export function HomePage() {
             <Icon name="history" size={22} color="var(--accent)" />
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.015em', margin: '0 0 6px' }}>
-            View history
+            {t('home.historyTitle')}
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: 0, lineHeight: 1.55 }}>
-            Browse and re-export reports from prior studies.
+            {t('home.historyBody')}
           </p>
           <Icon
             name="arrow-up-right"
@@ -168,7 +170,7 @@ export function HomePage() {
             color="var(--text-subtle)"
             style={{ position: 'absolute', top: 24, right: 24 }}
           />
-        </Link>
+        </LangLink>
       </div>
 
       <div
@@ -177,7 +179,7 @@ export function HomePage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: 0,
           marginBottom: 32,
-          border: '1px solid var(--border)',
+          border: '1px solid var(--border)', 
           borderRadius: 14,
           background: 'var(--surface)',
           overflow: 'hidden',
@@ -185,10 +187,10 @@ export function HomePage() {
       >
         {(
           [
-            ['This week', String(stats.recentWeek), 'scans run'],
-            ['Positive findings', String(stats.positive), `${stats.total ? Math.round((stats.positive / stats.total) * 100) : 0}% of total`],
-            ['Total scans', String(stats.total), 'all studies'],
-            ['Pending review', String(stats.pending), 'awaiting sign-off'],
+            [t('home.stats.thisWeek'), String(stats.recentWeek), t('home.stats.scansRun')],
+            [t('home.stats.positiveFindings'), String(stats.positive), t('home.stats.ofTotal', { pct: stats.total ? Math.round((stats.positive / stats.total) * 100) : 0 })],
+            [t('home.stats.totalScans'), String(stats.total), t('home.stats.allStudies')],
+            [t('home.stats.pendingReview'), String(stats.pending), t('home.stats.awaitingSignOff')],
           ] as const
         ).map((s, i) => (
           <div
@@ -228,10 +230,10 @@ export function HomePage() {
           marginBottom: 14,
         }}
       >
-        <h2 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.015em', margin: 0 }}>Recent scans</h2>
-        <Link to="/app/history" style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          View all <Icon name="arrow-right" size={14} />
-        </Link>
+        <h2 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.015em', margin: 0 }}>{t('home.recentScans')}</h2>
+        <LangLink to="/app/history" style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          {t('common.actions.viewAll')} <Icon name="arrow-right" size={14} />
+        </LangLink>
       </div>
       <div className="card" style={{ overflow: 'hidden' }}>
         {error && (
@@ -243,10 +245,10 @@ export function HomePage() {
         <table className="tbl">
           <thead>
             <tr>
-              <th>Type</th>
-              <th>Date</th>
-              <th>Result</th>
-              <th style={{ textAlign: 'right' }}>Action</th>
+              <th>{t('common.table.type')}</th>
+              <th>{t('common.table.date')}</th>
+              <th>{t('common.table.result')}</th>
+              <th style={{ textAlign: 'right' }}>{t('common.table.action')}</th>
             </tr>
           </thead>
           <tbody>
@@ -266,7 +268,7 @@ export function HomePage() {
                         border: '1px solid var(--border-strong)',
                       }}
                     >
-                      <Icon name={s.typeLabel === 'Lung X-Ray' ? 'wind' : 'bone'} size={15} color="var(--accent)" />
+                      <Icon name={s.typeLabel === t('common.scanTypes.lung') ? 'wind' : 'bone'} size={15} color="var(--accent)" />
                     </div>
                     <div>
                       <div style={{ fontWeight: 500 }}>{s.typeLabel}</div>
@@ -293,12 +295,12 @@ export function HomePage() {
                   </span>
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  <Link
+                  <LangLink
                     to={s.diagnosisId ? `/app/results/${s.caseId}/${s.diagnosisId}` : '/app/history'}
                     className="btn btn-ghost btn-sm"
                   >
-                    View report <Icon name="arrow-right" size={14} />
-                  </Link>
+                    {t('common.actions.viewReport')} <Icon name="arrow-right" size={14} />
+                  </LangLink>
                 </td>
               </tr>
             ))}

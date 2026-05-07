@@ -1,5 +1,7 @@
 import { diagnosisToResultLabel } from '../api/view-models';
 import type { DiagnosisResponse, PatientCaseResponse } from '../api/types';
+import { APP_COPY } from '../constants/copy';
+import { useTranslation } from 'react-i18next';
 
 type Tone = {
   badgeClass: string;
@@ -10,39 +12,40 @@ type Tone = {
 };
 
 function getTone(diagnosis: DiagnosisResponse | null): Tone {
+  const { t } = useTranslation();
   const label = diagnosisToResultLabel(diagnosis);
   switch (label) {
     case 'Negative':
       return {
         badgeClass: 'badge-negative',
         dotColor: '#10B981',
-        title: 'No acute findings detected',
+        title: t('results.statusTitles.negative'),
         gradient: 'linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 72%)',
-        label: 'Negative',
+        label: t('common.resultLabels.negative'),
       };
     case 'Pending':
       return {
         badgeClass: 'badge-neutral',
         dotColor: '#0D9488',
-        title: 'Analysis is still running',
+        title: t('results.statusTitles.pending'),
         gradient: 'linear-gradient(135deg, #E6F4F2 0%, #FFFFFF 72%)',
-        label: 'Pending',
+        label: t('common.resultLabels.pending'),
       };
     case 'Failed':
       return {
         badgeClass: 'badge-positive',
         dotColor: '#EF4444',
-        title: 'Analysis could not be completed',
+        title: t('results.statusTitles.failed'),
         gradient: 'linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 72%)',
-        label: 'Failed',
+        label: t('common.resultLabels.failed'),
       };
     default:
       return {
         badgeClass: 'badge-positive',
         dotColor: '#EF4444',
-        title: 'Finding detected',
+        title: t('results.statusTitles.positive'),
         gradient: 'linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 72%)',
-        label: 'Positive',
+        label: t('common.resultLabels.positive'),
       };
   }
 }
@@ -73,10 +76,11 @@ function fmt(date: Date): string {
 }
 
 function historyItemHtml(d: DiagnosisResponse, isActive: boolean): string {
+  const { t } = useTranslation();
   const tone = getTone(d);
   const ts = fmt(new Date(d.createdAt));
   const finding =
-    d.finding ?? (d.status === 'pending' ? 'Awaiting result...' : 'No finding text available.');
+    d.finding ?? (d.status === 'pending' ? t('results.awaitingLiveResult') : t('results.noFindingText'));
   const borderColor = isActive ? '#0D9488' : '#E2EDEC';
   const bgColor = isActive ? '#E6F4F2' : '#FAFCFC';
 
@@ -104,29 +108,30 @@ export async function buildReportHtml(
   patientCase: PatientCaseWithPatient,
   activeDiagnosisId: string,
 ): Promise<string> {
+  const { t } = useTranslation();
   const current =
     patientCase.diagnoses.find((d) => d.id === activeDiagnosisId) ??
     patientCase.diagnoses[0] ??
     null;
 
   const tone = getTone(current);
-  const caseTypeLabel = patientCase.caseType === 'lung' ? 'Lung X-Ray' : 'Bone Fracture';
+  const caseTypeLabel = patientCase.caseType === 'lung' ? t('common.scanTypes.lung') : t('common.scanTypes.bone');
   const createdDate = fmt(new Date(patientCase.createdAt));
   const generatedAt = fmt(new Date());
 
   const narrative =
     !current || current.status === 'pending'
-      ? 'Your scan is still being analyzed. Live updates will appear here as soon as the diagnosis completes.'
+      ? t('results.narratives.pending')
       : current.status === 'failed'
-        ? current.finding || 'The diagnosis failed. Try rerunning the analysis.'
-        : current.finding || 'Diagnosis completed without a textual finding.';
+        ? current.finding || t('results.narratives.failed')
+        : current.finding || t('results.narratives.empty');
 
   const { patient } = patientCase;
-  const patientName = patient?.fullName ?? patient?.email ?? 'Unknown';
-  const patientAge = patient?.age != null ? `${patient.age} yrs` : 'N/A';
+  const patientName = patient?.fullName ?? patient?.email ?? t('common.fallbacks.unknown');
+  const patientAge = patient?.age != null ? t('report.patientAge', { age: patient.age }) : t('common.fallbacks.notAvailable');
   const caseNumber = patientCase.id.slice(0, 8).toUpperCase();
   const caseIdShort = patientCase.id.slice(0, 8);
-  const diagnosisIdShort = current?.id.slice(0, 8) ?? '—';
+  const diagnosisIdShort = current?.id.slice(0, 8) ?? t('common.fallbacks.emDash');
 
   const imageData = await urlToBase64(patientCase.xrayUrl);
 
@@ -138,7 +143,7 @@ export async function buildReportHtml(
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>Diagnova — Analysis Report</title>
+<title>${t('report.title')}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -190,45 +195,45 @@ body{
       <path d="M9 16 L13 16 L15 11 L17 21 L19 16 L23 16" stroke="#5EEAD4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       <circle cx="23" cy="16" r="1.6" fill="#5EEAD4"/>
     </svg>
-    <span style="font-size:18px;font-weight:600;letter-spacing:-0.02em;color:#FFFFFF;">Diagnova</span>
+    <span style="font-size:18px;font-weight:600;letter-spacing:-0.02em;color:#FFFFFF;">${t('brand.name')}</span>
   </div>
   <div style="text-align:right;">
-    <div style="font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">Analysis Report</div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${t('report.headerTitle')}</div>
     <div style="font-size:12px;color:rgba(255,255,255,0.72);">${generatedAt}</div>
   </div>
 </header>
 
 <!-- SECTION 2: PAGE HEADER -->
 <div style="padding:22px 36px 10px;">
-  <div class="eyebrow" style="margin-bottom:6px;">Results</div>
-  <h1 style="font-size:22px;font-weight:600;letter-spacing:-0.015em;margin-bottom:4px;">Analysis report</h1>
-  <p style="font-size:14px;color:var(--text-muted);">${caseTypeLabel} / created ${createdDate}</p>
+  <div class="eyebrow" style="margin-bottom:6px;">${t('results.eyebrow')}</div>
+  <h1 style="font-size:22px;font-weight:600;letter-spacing:-0.015em;margin-bottom:4px;">${t('results.reportTitle')}</h1>
+  <p style="font-size:14px;color:var(--text-muted);">${t('results.createdSub', { caseType: caseTypeLabel, date: createdDate })}</p>
   <div class="divider" style="margin-top:14px;"></div>
 </div>
 
 <!-- SECTION 2.5: PATIENT DETAILS -->
 <div style="padding:0 36px 16px;">
   <div class="card" style="padding:18px 22px;">
-    <div class="eyebrow" style="margin-bottom:12px;">Patient details</div>
+    <div class="eyebrow" style="margin-bottom:12px;">${t('report.patientDetails')}</div>
     <div style="display:grid;grid-template-columns:repeat(5,1fr);">
       <div style="padding:0 16px 0 0;border-right:1px solid var(--border);">
-        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">Full name</div>
+        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">${t('fields.fullName')}</div>
         <div style="font-size:13px;font-weight:500;color:var(--text);">${patientName}</div>
       </div>
       <div style="padding:0 16px;border-right:1px solid var(--border);">
-        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">Age</div>
+        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">${t('fields.age')}</div>
         <div style="font-size:13px;font-weight:500;color:var(--text);">${patientAge}</div>
       </div>
       <div style="padding:0 16px;border-right:1px solid var(--border);">
-        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">Gender</div>
-        <div style="font-size:13px;font-weight:500;color:var(--text);">N/A</div>
+        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">${t('fields.gender')}</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text);">${t('common.fallbacks.notAvailable')}</div>
       </div>
       <div style="padding:0 16px;border-right:1px solid var(--border);">
-        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">Case №</div>
+        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">${t('report.caseNumber')}</div>
         <div style="font-size:13px;font-weight:500;color:var(--text);">${caseNumber}</div>
       </div>
       <div style="padding:0 0 0 16px;">
-        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">Case ID</div>
+        <div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;letter-spacing:0.03em;">${t('results.caseId')}</div>
         <div class="mono" style="font-size:10px;color:var(--text-muted);word-break:break-all;">${patientCase.id}</div>
       </div>
     </div>
@@ -244,9 +249,9 @@ body{
       <div class="card" style="padding:22px;background:${tone.gradient};">
         <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-start;">
           <div>
-            <div class="eyebrow" style="margin-bottom:8px;">Diagnosis status</div>
+            <div class="eyebrow" style="margin-bottom:8px;">${t('results.statusEyebrow')}</div>
             <h2 style="font-size:21px;font-weight:600;letter-spacing:-0.02em;margin-bottom:5px;">${tone.title}</h2>
-            <p style="font-size:12px;color:var(--text-muted);">Case ${caseIdShort} is tied to diagnosis ${diagnosisIdShort}.</p>
+            <p style="font-size:12px;color:var(--text-muted);">${t('results.statusDescription', { caseId: caseIdShort, diagnosisId: diagnosisIdShort })}</p>
           </div>
           <span class="badge ${tone.badgeClass}">
             <span class="badge-dot" style="background:${tone.dotColor};"></span>
@@ -260,18 +265,18 @@ body{
 
       <!-- SECTION 4: CLINICAL CONTEXT -->
       <div class="card" style="padding:22px;">
-        <div class="eyebrow" style="margin-bottom:8px;">Clinical context</div>
-        <h3 style="font-size:16px;font-weight:600;letter-spacing:-0.015em;margin-bottom:10px;">Submitted notes</h3>
+        <div class="eyebrow" style="margin-bottom:8px;">${t('results.clinicalContext')}</div>
+        <h3 style="font-size:16px;font-weight:600;letter-spacing:-0.015em;margin-bottom:10px;">${t('results.submittedNotes')}</h3>
         <p style="font-size:13.5px;line-height:1.75;color:var(--text-muted);">
-          ${patientCase.clinicDescription ?? 'No clinical description was provided for this case.'}
+          ${patientCase.clinicDescription ?? t('results.noClinicalDescription')}
         </p>
       </div>
 
       <!-- SECTION 5: SOURCE IMAGE -->
       <div class="card" style="padding:22px;">
-        <div class="eyebrow" style="margin-bottom:8px;">Source image</div>
+        <div class="eyebrow" style="margin-bottom:8px;">${t('results.sourceImage')}</div>
         <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#F6FAFA;">
-          <img src="${imageData}" alt="${caseTypeLabel} source image"
+          <img src="${imageData}" alt="${t('results.sourceImageAlt', { caseType: caseTypeLabel })}"
             style="display:block;width:100%;max-height:400px;object-fit:contain;"/>
         </div>
       </div>
@@ -281,35 +286,35 @@ body{
 
       <!-- SECTION 6: CASE DETAILS -->
       <div class="card" style="padding:18px;">
-        <div class="eyebrow" style="margin-bottom:10px;">Case details</div>
+        <div class="eyebrow" style="margin-bottom:10px;">${t('results.caseDetails')}</div>
         <div style="display:grid;gap:10px;font-size:12px;">
           <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
-            <span style="color:var(--text-muted);flex-shrink:0;">Case ID</span>
+            <span style="color:var(--text-muted);flex-shrink:0;">${t('results.caseId')}</span>
             <span class="mono" style="font-size:10px;word-break:break-all;text-align:right;">${patientCase.id}</span>
           </div>
           <div class="divider"></div>
           <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
-            <span style="color:var(--text-muted);flex-shrink:0;">Diagnosis ID</span>
-            <span class="mono" style="font-size:10px;word-break:break-all;text-align:right;">${current?.id ?? '—'}</span>
+            <span style="color:var(--text-muted);flex-shrink:0;">${t('results.diagnosisId')}</span>
+            <span class="mono" style="font-size:10px;word-break:break-all;text-align:right;">${current?.id ?? t('common.fallbacks.emDash')}</span>
           </div>
           <div class="divider"></div>
           <div style="display:flex;justify-content:space-between;gap:8px;">
-            <span style="color:var(--text-muted);">Study type</span>
+            <span style="color:var(--text-muted);">${t('results.studyType')}</span>
             <span>${caseTypeLabel}</span>
           </div>
           <div class="divider"></div>
           <div style="display:flex;justify-content:space-between;gap:8px;">
-            <span style="color:var(--text-muted);">Created</span>
+            <span style="color:var(--text-muted);">${t('results.created')}</span>
             <span style="text-align:right;">${createdDate}</span>
           </div>
           <div class="divider"></div>
           <div style="display:flex;justify-content:space-between;gap:8px;">
-            <span style="color:var(--text-muted);">Status</span>
-            <span class="mono">${current?.status ?? '—'}</span>
+            <span style="color:var(--text-muted);">${t('report.status')}</span>
+            <span class="mono">${current?.status ?? t('common.fallbacks.emDash')}</span>
           </div>
           <div class="divider"></div>
           <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
-            <span style="color:var(--text-muted);flex-shrink:0;">Patient</span>
+            <span style="color:var(--text-muted);flex-shrink:0;">${t('report.patient')}</span>
             <span style="text-align:right;">${patientName}</span>
           </div>
         </div>
@@ -317,7 +322,7 @@ body{
 
       <!-- SECTION 7: DIAGNOSIS HISTORY -->
       <div class="card" style="padding:18px;">
-        <div class="eyebrow" style="margin-bottom:10px;">Diagnosis history</div>
+        <div class="eyebrow" style="margin-bottom:10px;">${t('results.diagnosisHistory')}</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           ${historyHtml}
         </div>
@@ -335,9 +340,9 @@ body{
       <path d="M9 16 L13 16 L15 11 L17 21 L19 16 L23 16" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       <circle cx="23" cy="16" r="1.6" fill="#0D9488"/>
     </svg>
-    <span style="font-size:12px;color:var(--text-muted);">Diagnova — AI-powered radiology assistant</span>
+    <span style="font-size:12px;color:var(--text-muted);">${t('brand.name')} - ${t('brand.productDescription')}</span>
   </div>
-  <span style="font-size:11px;color:var(--text-subtle);">Generated ${generatedAt} · For clinical review only</span>
+  <span style="font-size:11px;color:var(--text-subtle);">${t('report.generatedFooter', { date: generatedAt })}</span>
 </footer>
 
 </div>

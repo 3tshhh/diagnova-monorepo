@@ -1,10 +1,11 @@
 import type { DiagnosisResponse, PatientCaseResponse } from './types';
+import i18n from '../../i18n';
 
 export type ScanRow = {
   id: string;
-  typeLabel: 'Lung X-Ray' | 'Bone Fracture';
+  typeLabel: string;
   date: string;
-  resultLabel: 'Positive' | 'Negative' | 'Pending' | 'Failed';
+  resultLabel: string;
   detail: string;
   caseId: string;
   diagnosisId: string | null;
@@ -20,16 +21,18 @@ function isNoFinding(finding: string): boolean {
 }
 
 export function diagnosisToResultLabel(diagnosis: DiagnosisResponse | null): ScanRow['resultLabel'] {
-  if (!diagnosis) return 'Pending';
-  if (diagnosis.status === 'pending') return 'Pending';
-  if (diagnosis.status === 'failed') return 'Failed';
-  if (!diagnosis.finding) return 'Pending';
-  return isNoFinding(diagnosis.finding) ? 'Negative' : 'Positive';
+  const t = i18n.t.bind(i18n);
+  if (!diagnosis) return t('common.resultLabels.pending');
+  if (diagnosis.status === 'pending') return t('common.resultLabels.pending');
+  if (diagnosis.status === 'failed') return t('common.resultLabels.failed');
+  if (!diagnosis.finding) return t('common.resultLabels.pending');
+  return isNoFinding(diagnosis.finding) ? t('common.resultLabels.negative') : t('common.resultLabels.positive');
 }
 
 export function mapCaseToScanRow(patientCase: PatientCaseResponse): ScanRow {
+  const t = i18n.t.bind(i18n);
   const latest = getLatestDiagnosis(patientCase);
-  const typeLabel = patientCase.caseType === 'lung' ? 'Lung X-Ray' : 'Bone Fracture';
+  const typeLabel = patientCase.caseType === 'lung' ? t('common.scanTypes.lung') : t('common.scanTypes.bone');
 
   return {
     id: patientCase.id,

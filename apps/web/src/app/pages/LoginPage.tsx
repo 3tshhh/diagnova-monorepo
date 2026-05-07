@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
 import { AuthShell } from '../components/AuthShell';
 import { Icon } from '../components/Icon';
+import { LangLink, useLangNavigate } from '../hooks/useLang';
 import { login } from '../api/auth';
+import { useTranslation } from 'react-i18next';
 
 export function LoginPage() {
-  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const navigate = useLangNavigate();
   const [form, setForm] = useState({ email: '', pw: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,7 +24,7 @@ export function LoginPage() {
       });
       navigate('/app');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to login';
+      const message = err instanceof Error ? err.message : t('errors.unableToLogin');
       setError(message);
     } finally {
       setLoading(false);
@@ -31,37 +33,37 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      eyebrow="Welcome back"
-      title="Pick up where you left off."
-      sub="Your case list and reading history sync across devices."
+      eyebrow={t('login.shellEyebrow')}
+      title={t('login.shellTitle')}
+      sub={t('login.shellSub')}
     >
-      <h2 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', margin: '0 0 6px' }}>Login</h2>
+      <h2 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', margin: '0 0 6px' }}>{t('login.title')}</h2>
       <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 24px' }}>
-        New to Diagnova? <Link to="/signup">Create an account</Link>
+        {t('login.signupPrompt')} <LangLink to="/signup">{t('common.actions.createAccount')}</LangLink>
       </p>
 
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
-          <label className="field-label">Email</label>
+          <label className="field-label">{t('fields.email')}</label>
           <input
             className="input"
             type="email"
-            placeholder="jane@hospital.org"
+            placeholder={t('placeholders.email')}
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </div>
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <label className="field-label">Password</label>
-            <Link to="/forgot-password" style={{ fontSize: 13 }}>
-              Forgot password?
-            </Link>
+            <label className="field-label">{t('fields.password')}</label>
+            <LangLink to="/forgot-password" style={{ fontSize: 13 }}>
+              {t('login.forgotPassword')}
+            </LangLink>
           </div>
           <input
             className="input"
             type="password"
-            placeholder="••••••••"
+            placeholder={t('placeholders.password')}
             value={form.pw}
             onChange={(e) => setForm({ ...form, pw: e.target.value })}
           />
@@ -76,7 +78,7 @@ export function LoginPage() {
             marginTop: 4,
           }}
         >
-          <input type="checkbox" /> Keep me signed in on this device
+          <input type="checkbox" /> {t('login.keepSignedIn')}
         </label>
 
         {error && (
@@ -94,7 +96,7 @@ export function LoginPage() {
         )}
 
         <button type="submit" className="btn btn-primary btn-lg" style={{ marginTop: 6 }} disabled={loading}>
-          Login <Icon name="arrow-right" size={16} />
+          {t('common.actions.login')} <Icon name="arrow-right" size={16} />
         </button>
 
         <div
@@ -107,11 +109,11 @@ export function LoginPage() {
             fontSize: 12,
           }}
         >
-          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} /> OR
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} /> {t('login.divider')}
           <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         </div>
         <button type="button" className="btn btn-outline btn-lg">
-          <Icon name="building-2" size={16} /> Continue with hospital SSO
+          <Icon name="building-2" size={16} /> {t('login.sso')}
         </button>
       </form>
     </AuthShell>

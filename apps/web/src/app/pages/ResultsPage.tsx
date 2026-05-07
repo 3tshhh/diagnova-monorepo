@@ -1,37 +1,40 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { Icon } from '../components/Icon';
 import { PageHeader } from '../components/PageHeader';
+import { LangLink, useLangNavigate } from '../hooks/useLang';
 import { getCase, openDiagnosisStream, rerunDiagnosis } from '../api/cases';
 import { diagnosisToResultLabel, getLatestDiagnosis } from '../api/view-models';
 import { useAuthGuard } from '../api/useAuthGuard';
 import type { DiagnosisResponse, PatientCaseResponse } from '../api/types';
 import { buildReportHtml } from '../utils/reportTemplate';
+import { useTranslation } from 'react-i18next';
 
-function getStatusTone(resultLabel: ReturnType<typeof diagnosisToResultLabel>) {
-  if (resultLabel === 'Negative') {
+function getStatusTone(resultLabel: ReturnType<typeof diagnosisToResultLabel>, t: ReturnType<typeof useTranslation>['t'] ) {
+
+  if (resultLabel === t('common.resultLabels.negative')) {
     return {
       badgeClass: 'badge-negative',
       dotColor: '#10B981',
-      title: 'No acute findings detected',
+      title: t('results.statusTitles.negative'),
       gradient: 'linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 72%)',
     };
   }
 
-  if (resultLabel === 'Pending') {
+  if (resultLabel === t('common.resultLabels.pending')) {
     return {
       badgeClass: 'badge-neutral',
       dotColor: 'var(--accent)',
-      title: 'Analysis is still running',
+      title: t('results.statusTitles.pending'),
       gradient: 'linear-gradient(135deg, #E6F4F2 0%, #FFFFFF 72%)',
     };
   }
 
-  if (resultLabel === 'Failed') {
+  if (resultLabel === t('common.resultLabels.failed')) {
     return {
       badgeClass: 'badge-positive',
       dotColor: '#EF4444',
-      title: 'Analysis could not be completed',
+      title: t('results.statusTitles.failed'),
       gradient: 'linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 72%)',
     };
   }
@@ -39,15 +42,16 @@ function getStatusTone(resultLabel: ReturnType<typeof diagnosisToResultLabel>) {
   return {
     badgeClass: 'badge-positive',
     dotColor: '#EF4444',
-    title: 'Finding detected',
+    title: t('results.statusTitles.positive'),
     gradient: 'linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 72%)',
   };
 }
 
 export function ResultsPage() {
+  const { t } = useTranslation();
   useAuthGuard();
 
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
   const { caseId = '', diagnosisId = '' } = useParams();
   const [patientCase, setPatientCase] = useState<PatientCaseResponse | null>(null);
   const [activeDiagnosisId, setActiveDiagnosisId] = useState(diagnosisId);
@@ -69,7 +73,7 @@ export function ResultsPage() {
         const data = await getCase(caseId);
         setPatientCase(data);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unable to load case';
+        const message = err instanceof Error ? err.message : t('errors.unableToLoadCase');
         setError(message);
       } finally {
         setLoading(false);
@@ -106,7 +110,7 @@ export function ResultsPage() {
         setPatientCase((current) => {
           const diagnosis = current?.diagnoses.find((d) => d.id === activeDiagnosisId);
           if (diagnosis && diagnosis.status === 'pending') {
-            setStreamError('Live updates disconnected. Refresh to check the latest result.');
+            setStreamError(t('errors.liveUpdatesDisconnected'));
           }
           return current;
         });
@@ -119,8 +123,8 @@ export function ResultsPage() {
   }, [activeDiagnosisId, caseId, currentDiagnosis]);
 
   const resultLabel = diagnosisToResultLabel(currentDiagnosis);
-  const tone = getStatusTone(resultLabel);
-  const caseTypeLabel = patientCase?.caseType === 'lung' ? 'Lung X-Ray' : 'Bone Fracture';
+  const tone = getStatusTone(resultLabel, t);
+  const caseTypeLabel = patientCase?.caseType === 'lung' ? t('common.scanTypes.lung') : t('common.scanTypes.bone');
   const createdDate = patientCase
     ? new Date(patientCase.createdAt).toLocaleString('en-US', {
         month: 'short',
@@ -133,10 +137,10 @@ export function ResultsPage() {
 
   const narrative =
     currentDiagnosis?.status === 'pending'
-      ? 'Your scan is still being analyzed. Live updates will appear here as soon as the diagnosis completes.'
+      ? t('results.narratives.pending')
       : currentDiagnosis?.status === 'failed'
-        ? currentDiagnosis.finding || 'The diagnosis failed. Try rerunning the analysis.'
-        : currentDiagnosis?.finding || 'Diagnosis completed without a textual finding.';
+        ? currentDiagnosis.finding || t('results.narratives.failed')
+        : currentDiagnosis?.finding || t('results.narratives.empty');
 
   const downloadReport = async () => {
     if (!patientCase || !currentDiagnosis) return;
@@ -151,12 +155,12 @@ export function ResultsPage() {
       const win = window.open(blobUrl, '_blank');
       if (!win) {
         URL.revokeObjectURL(blobUrl);
-        setError('Unable to open report window. Allow pop-ups for this site and try again.');
+        setError(t('errors.unableToOpenReport'));
         return;
       }
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to export report';
+      const message = err instanceof Error ? err.message : t('errors.unableToExportReport');
       setError(message);
     } finally {
       setExporting(false);
@@ -177,7 +181,7 @@ export function ResultsPage() {
       setPatientCase(refreshed);
       navigate(`/app/results/${caseId}/${response.diagnosis_id}`, { replace: true });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to rerun analysis';
+      const message = err instanceof Error ? err.message : t('errors.unableToRerunAnalysis');
       setError(message);
     } finally {
       setRerunning(false);
@@ -195,9 +199,9 @@ export function ResultsPage() {
   if (!patientCase || !currentDiagnosis) {
     return (
       <div className="fade-up">
-        <PageHeader eyebrow="Results" title="Case results" sub="Review AI findings and export the report." />
+        <PageHeader eyebrow={t('results.eyebrow')} title={t('results.caseResultsTitle')} sub={t('results.caseResultsSub')} />
         <div className="card" style={{ padding: 24, color: 'var(--danger)' }}>
-          {error || 'Case or diagnosis not found.'}
+          {error || t('errors.caseOrDiagnosisNotFound')}
         </div>
       </div>
     );
@@ -206,16 +210,16 @@ export function ResultsPage() {
   return (
     <div className="fade-up">
       <PageHeader
-        eyebrow="Results"
-        title="Analysis report"
-        sub={`${caseTypeLabel} / created ${createdDate}`}
+        eyebrow={t('results.eyebrow')}
+        title={t('results.reportTitle')}
+        sub={t('results.createdSub', { caseType: caseTypeLabel, date: createdDate })}
         actions={
           <>
             <button type="button" onClick={() => void downloadReport()} className="btn btn-outline" disabled={exporting}>
-              <Icon name="download" size={16} /> {exporting ? 'Exporting...' : 'Export report'}
+              <Icon name="download" size={16} /> {exporting ? t('common.actions.exporting') : t('common.actions.exportReport')}
             </button>
             <button type="button" onClick={() => void runAgain()} className="btn btn-primary" disabled={rerunning}>
-              <Icon name="sparkles" size={16} /> {rerunning ? 'Rerunning...' : 'Rerun analysis'}
+              <Icon name="sparkles" size={16} /> {rerunning ? t('common.actions.rerunning') : t('common.actions.rerunAnalysis')}
             </button>
           </>
         }
@@ -242,11 +246,11 @@ export function ResultsPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
               <div>
                 <div className="eyebrow" style={{ marginBottom: 8 }}>
-                  Diagnosis status
+                  {t('results.statusEyebrow')}
                 </div>
                 <h2 style={{ margin: '0 0 6px', fontSize: 24, letterSpacing: '-0.02em' }}>{tone.title}</h2>
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-muted)' }}>
-                  Case {patientCase.id.slice(0, 8)} is tied to diagnosis {currentDiagnosis.id.slice(0, 8)}.
+                  {t('results.statusDescription', { caseId: patientCase.id.slice(0, 8), diagnosisId: currentDiagnosis.id.slice(0, 8) })}
                 </p>
               </div>
               <span className={`badge ${tone.badgeClass}`}>
@@ -279,17 +283,17 @@ export function ResultsPage() {
 
           <div className="card" style={{ padding: 24 }}>
             <div className="eyebrow" style={{ marginBottom: 8 }}>
-              Clinical context
+              {t('results.clinicalContext')}
             </div>
-            <h3 style={{ margin: '0 0 12px', fontSize: 18, letterSpacing: '-0.015em' }}>Submitted notes</h3>
+            <h3 style={{ margin: '0 0 12px', fontSize: 18, letterSpacing: '-0.015em' }}>{t('results.submittedNotes')}</h3>
             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: 'var(--text-muted)' }}>
-              {patientCase.clinicDescription || 'No clinical description was provided for this case.'}
+              {patientCase.clinicDescription || t('results.noClinicalDescription')}
             </p>
           </div>
 
           <div className="card" style={{ padding: 24 }}>
             <div className="eyebrow" style={{ marginBottom: 8 }}>
-              Source image
+              {t('results.sourceImage')}
             </div>
             <div
               style={{
@@ -301,37 +305,37 @@ export function ResultsPage() {
             >
               <img
                 src={patientCase.xrayUrl}
-                alt={`${caseTypeLabel} source`}
+                alt={t('results.sourceImageAlt', { caseType: caseTypeLabel })}
                 style={{ display: 'block', width: '100%', maxHeight: 520, objectFit: 'contain' }}
               />
             </div>
           </div>
-        </div>
+        </div> 
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="card" style={{ padding: 24 }}>
             <div className="eyebrow" style={{ marginBottom: 8 }}>
-              Case details
+              {t('results.caseDetails')}
             </div>
             <div style={{ display: 'grid', gap: 14, fontSize: 13 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ color: 'var(--text-muted)' }}>Case ID</span>
+                <span style={{ color: 'var(--text-muted)' }}>{t('results.caseId')}</span>
                 <span className="mono">{patientCase.id}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ color: 'var(--text-muted)' }}>Diagnosis ID</span>
+                <span style={{ color: 'var(--text-muted)' }}>{t('results.diagnosisId')}</span>
                 <span className="mono">{currentDiagnosis.id}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ color: 'var(--text-muted)' }}>Study type</span>
+                <span style={{ color: 'var(--text-muted)' }}>{t('results.studyType')}</span>
                 <span>{caseTypeLabel}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ color: 'var(--text-muted)' }}>Created</span>
+                <span style={{ color: 'var(--text-muted)' }}>{t('results.created')}</span>
                 <span>{createdDate}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ color: 'var(--text-muted)' }}>Backend status</span>
+                <span style={{ color: 'var(--text-muted)' }}>{t('results.backendStatus')}</span>
                 <span className="mono">{currentDiagnosis.status}</span>
               </div>
             </div>
@@ -339,12 +343,12 @@ export function ResultsPage() {
 
           <div className="card" style={{ padding: 24 }}>
             <div className="eyebrow" style={{ marginBottom: 8 }}>
-              Diagnosis history
+              {t('results.diagnosisHistory')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {patientCase.diagnoses.map((diagnosis) => {
                 const itemLabel = diagnosisToResultLabel(diagnosis);
-                const itemTone = getStatusTone(itemLabel);
+                const itemTone = getStatusTone(itemLabel, t);
 
                 return (
                   <div
@@ -373,7 +377,7 @@ export function ResultsPage() {
                       </span>
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                      {diagnosis.finding || (diagnosis.status === 'pending' ? 'Awaiting live result...' : 'No finding text available.')}
+                      {diagnosis.finding || (diagnosis.status === 'pending' ? t('results.awaitingLiveResult') : t('results.noFindingText'))}
                     </div>
                   </div>
                 );
@@ -383,15 +387,15 @@ export function ResultsPage() {
 
           <div className="card" style={{ padding: 24 }}>
             <div className="eyebrow" style={{ marginBottom: 8 }}>
-              Next steps
+              {t('results.nextSteps')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Link to="/app/history" className="btn btn-outline" style={{ width: '100%' }}>
-                <Icon name="history" size={16} /> Back to history
-              </Link>
-              <Link to="/app/upload" className="btn btn-primary" style={{ width: '100%' }}>
-                <Icon name="plus" size={16} /> Start another scan
-              </Link>
+              <LangLink to="/app/history" className="btn btn-outline" style={{ width: '100%' }}>
+                <Icon name="history" size={16} /> {t('common.actions.backToHistory')}
+              </LangLink>
+              <LangLink to="/app/upload" className="btn btn-primary" style={{ width: '100%' }}>
+                <Icon name="plus" size={16} /> {t('common.actions.startAnotherScan')}
+              </LangLink>
             </div>
           </div>
         </div>

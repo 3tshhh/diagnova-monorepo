@@ -1,6 +1,9 @@
 import { Icon } from './Icon';
+import { APP_COPY } from '../constants/copy';
+import { useTranslation } from 'react-i18next';
 
 export function HeroScanCard() {
+  const { t } = useTranslation();
   return (
     <div style={{ position: 'relative' }}>
       <div
@@ -31,7 +34,7 @@ export function HeroScanCard() {
             boxShadow: '0 0 0 4px rgba(16,185,129,0.2)',
           }}
         />
-        Analysis complete · 6.4s
+        {t('heroScanCard.complete')}
       </div>
 
       <div
@@ -55,8 +58,8 @@ export function HeroScanCard() {
           }}
           className="mono"
         >
-          <span>STUDY · CXR-2026-04812</span>
-          <span>PA VIEW</span>
+          <span>{t('heroScanCard.study')}</span>
+          <span>{t('heroScanCard.view')}</span>
         </div>
         <div
           style={{
@@ -117,7 +120,7 @@ export function HeroScanCard() {
                 fontWeight: 500,
               }}
             >
-              OPACITY
+              {t('heroScanCard.findingLabel')}
             </div>
           </div>
           {[
@@ -157,11 +160,11 @@ export function HeroScanCard() {
             }}
             className="mono"
           >
-            Findings
+            {t('heroScanCard.findings')}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fff', fontSize: 14 }}>
             <span style={{ width: 6, height: 6, background: '#EF4444', borderRadius: 999 }} />
-            Right lower-lobe consolidation
+            {t('heroScanCard.finding')}
           </div>
         </div>
       </div>
@@ -185,7 +188,7 @@ export function HeroScanCard() {
         }}
       >
         <Icon name="shield-check" size={16} color="var(--accent)" />
-        14 pathologies screened
+        {t('heroScanCard.screened')}
       </div>
     </div>
   );
