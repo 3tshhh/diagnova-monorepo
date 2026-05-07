@@ -1,7 +1,6 @@
 import { diagnosisToResultLabel } from '../api/view-models';
 import type { DiagnosisResponse, PatientCaseResponse } from '../api/types';
-import { APP_COPY } from '../constants/copy';
-import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 type Tone = {
   badgeClass: string;
@@ -12,10 +11,10 @@ type Tone = {
 };
 
 function getTone(diagnosis: DiagnosisResponse | null): Tone {
-  const { t } = useTranslation();
+  const t = i18n.t.bind(i18n);
   const label = diagnosisToResultLabel(diagnosis);
   switch (label) {
-    case 'Negative':
+    case t('common.resultLabels.negative'):
       return {
         badgeClass: 'badge-negative',
         dotColor: '#10B981',
@@ -23,7 +22,7 @@ function getTone(diagnosis: DiagnosisResponse | null): Tone {
         gradient: 'linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 72%)',
         label: t('common.resultLabels.negative'),
       };
-    case 'Pending':
+    case t('common.resultLabels.pending'):
       return {
         badgeClass: 'badge-neutral',
         dotColor: '#0D9488',
@@ -31,7 +30,7 @@ function getTone(diagnosis: DiagnosisResponse | null): Tone {
         gradient: 'linear-gradient(135deg, #E6F4F2 0%, #FFFFFF 72%)',
         label: t('common.resultLabels.pending'),
       };
-    case 'Failed':
+    case t('common.resultLabels.failed'):
       return {
         badgeClass: 'badge-positive',
         dotColor: '#EF4444',
@@ -76,7 +75,7 @@ function fmt(date: Date): string {
 }
 
 function historyItemHtml(d: DiagnosisResponse, isActive: boolean): string {
-  const { t } = useTranslation();
+  const t = i18n.t.bind(i18n);
   const tone = getTone(d);
   const ts = fmt(new Date(d.createdAt));
   const finding =
@@ -108,7 +107,7 @@ export async function buildReportHtml(
   patientCase: PatientCaseWithPatient,
   activeDiagnosisId: string,
 ): Promise<string> {
-  const { t } = useTranslation();
+  const t = i18n.t.bind(i18n);
   const current =
     patientCase.diagnoses.find((d) => d.id === activeDiagnosisId) ??
     patientCase.diagnoses[0] ??
