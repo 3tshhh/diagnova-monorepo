@@ -8,6 +8,7 @@ import { getProfile } from '../api/profile';
 import { logout } from '../api/auth';
 import type { PatientProfile } from '../api/types';
 import { useTranslation } from 'react-i18next';
+import { ChatbotPopup } from './ChatbotPopup';
 
 type NavItem = {
   to: string;
@@ -228,6 +229,8 @@ export function AppLayout() {
           </div>
         </main>
       </div>
+
+      <ChatbotPopup />
     </div>
   );
 }

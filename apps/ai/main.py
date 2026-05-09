@@ -1,11 +1,12 @@
 import os
+import base64
+import json
 import logging
-import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, UploadFile, HTTPException, Header, BackgroundTasks, Depends
+from fastapi import FastAPI, HTTPException, Header, Depends, BackgroundTasks, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from model import BoneModel
-from lung_model import LungModel
+import httpx
+from chat_router import get_chat_router
 from schemas import AnalyzeRequest, CallbackPayload
 
 logger = logging.getLogger("diagnova")
@@ -13,6 +14,9 @@ logger = logging.getLogger("diagnova")
 load_dotenv()
 
 INTERNAL_SECRET = os.getenv("INTERNAL_SECRET")
+HF_TOKEN = os.getenv("HF_TOKEN")
+LUNG_SPACE_URL = os.getenv("LUNG_SPACE_URL", "https://etshh-lung.hf.space")
+BONE_SPACE_URL = os.getenv("BONE_SPACE_URL", "https://etshh-bone.hf.space")
 
 app = FastAPI(title="DIAGNOVA Inference API", version="2.0.0")
 
@@ -23,15 +27,49 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-bone_model = BoneModel()
-lung_model = LungModel()
-
 
 def verify_internal_key(x_internal_key: str = Header(...)):
     if not INTERNAL_SECRET:
         raise HTTPException(status_code=500, detail="INTERNAL_SECRET not configured")
     if x_internal_key != INTERNAL_SECRET:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+app.include_router(get_chat_router(verify_internal_key))
+
+
+def _hf_headers() -> dict:
+    return {"Authorization": f"Bearer {HF_TOKEN}"} if HF_TOKEN else {}
+
+
+async def call_hf_space(space_url: str, image_bytes: bytes) -> dict:
+    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+    headers = _hf_headers()
+
+    async with httpx.AsyncClient(timeout=120) as client:
+        # Step 1: submit job → get event_id
+        trigger = await client.post(
+            f"{space_url}/call/predict",
+            json={"data": [f"data:image/jpeg;base64,{image_b64}"]},
+            headers=headers,
+        )
+        trigger.raise_for_status()
+        event_id = trigger.json()["event_id"]
+
+        # Step 2: stream SSE until the "complete" event
+        event_type = None
+        async with client.stream("GET", f"{space_url}/call/predict/{event_id}", headers=headers) as stream:
+            async for line in stream.aiter_lines():
+                if line.startswith("event: "):
+                    event_type = line[7:].strip()
+                elif line.startswith("data: "):
+                    data_str = line[6:].strip()
+                    if event_type == "error":
+                        raise RuntimeError(f"HuggingFace Space error: {data_str}")
+                    if event_type == "complete" and data_str and data_str != "null":
+                        return json.loads(data_str)[0]
+
+    raise RuntimeError("No result received from HuggingFace Space")
 
 
 async def post_callback(callback_url: str, payload: CallbackPayload):
@@ -50,22 +88,14 @@ async def run_analysis(job: AnalyzeRequest):
             resp.raise_for_status()
             image_bytes = resp.content
 
-        case = job.case_type.lower()
-        if "lung" in case:
-            if not lung_model.is_loaded:
-                raise RuntimeError("Lung model not loaded")
-            result = lung_model.predict(image_bytes)
-        else:
-            if not bone_model.is_loaded:
-                raise RuntimeError("Bone model not loaded")
-            result = bone_model.predict(image_bytes)
+        space_url = LUNG_SPACE_URL if "lung" in job.case_type.lower() else BONE_SPACE_URL
+        result = await call_hf_space(space_url, image_bytes)
 
         if "findings" in result:
-            # lung model: multi-label list
             finding = ", ".join(result["findings"])
         else:
-            # bone model: single prediction with confidence
             finding = f"{result['prediction']} ({result['confidence']:.1%} confidence)"
+
         await post_callback(job.callback_url, CallbackPayload(finding=finding))
 
     except Exception as exc:
@@ -78,23 +108,12 @@ async def run_analysis(job: AnalyzeRequest):
 
 @app.get("/")
 def root():
-    return {
-        "status": "ok",
-        "message": "DIAGNOVA Inference API running",
-        "models": {
-            "bone": bone_model.is_loaded,
-            "lung": lung_model.is_loaded
-        }
-    }
+    return {"status": "ok", "message": "DIAGNOVA AI API running", "version": "2.0.0"}
 
 
 @app.get("/health")
 def health():
-    return {
-        "status": "healthy",
-        "bone_model_loaded": bone_model.is_loaded,
-        "lung_model_loaded": lung_model.is_loaded
-    }
+    return {"status": "healthy"}
 
 
 @app.post("/analyze", dependencies=[Depends(verify_internal_key)])
@@ -103,21 +122,15 @@ async def analyze(job: AnalyzeRequest, background_tasks: BackgroundTasks):
     return {"ok": True}
 
 
-@app.post("/predict/bone")
-async def predict_bone(file: UploadFile = File(...)):
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image")
-    if not bone_model.is_loaded:
-        raise HTTPException(status_code=503, detail="Bone model not loaded")
-    image_bytes = await file.read()
-    return bone_model.predict(image_bytes)
-
-
-@app.post("/predict/lung")
+@app.post("/predict/lung", dependencies=[Depends(verify_internal_key)])
 async def predict_lung(file: UploadFile = File(...)):
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
-    if not lung_model.is_loaded:
-        raise HTTPException(status_code=503, detail="Lung model not loaded")
-    image_bytes = await file.read()
-    return lung_model.predict(image_bytes)
+    return await call_hf_space(LUNG_SPACE_URL, await file.read())
+
+
+@app.post("/predict/bone", dependencies=[Depends(verify_internal_key)])
+async def predict_bone(file: UploadFile = File(...)):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    return await call_hf_space(BONE_SPACE_URL, await file.read())
