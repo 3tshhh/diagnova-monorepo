@@ -34,6 +34,7 @@ import {
   Activity,
   CheckCircle2,
   AlertCircle,
+  MessageCircle,
 } from 'lucide-react';
 
 const ICONS = {
@@ -71,6 +72,7 @@ const ICONS = {
   activity: Activity,
   'check-circle-2': CheckCircle2,
   'alert-circle': AlertCircle,
+  'message-circle': MessageCircle,
 } as const;
 
 export type IconName = keyof typeof ICONS;

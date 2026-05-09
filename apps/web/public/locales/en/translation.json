@@ -397,6 +397,16 @@
       }
     ]
   },
+  "chatbot": {
+    "title": "Medical Assistant",
+    "subtitle": "Online",
+    "openChat": "Ask AI Assistant",
+    "placeholder": "Write your message...",
+    "send": "Send",
+    "welcome": "Hello! I'm DIAGNOVA Assistant. I can answer general questions about lung and bone health. How can I help you today?",
+    "disclaimer": "For informational purposes only. Not a substitute for medical advice.",
+    "errorMessage": "Something went wrong. Please try again."
+  },
   "notFound": {
     "message": "Page not found."
   },

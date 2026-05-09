@@ -10,6 +10,14 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
 
+  ai:
+    image: ${ECR_REGISTRY}/${ECR_REPOSITORY_AI}:latest
+    restart: unless-stopped
+    env_file:
+      - apps/ai/.env
+    ports:
+      - "127.0.0.1:8000:8000"
+
   web:
     image: ${ECR_REGISTRY}/${ECR_REPOSITORY_WEB}:latest
     restart: unless-stopped
