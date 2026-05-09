@@ -99,7 +99,7 @@ jobs:
         if: steps.pr.outputs.number
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: gh pr merge ${{ steps.pr.outputs.number }} --rebase --admin
+        run: gh pr merge ${{ steps.pr.outputs.number }} --squash --admin
 
       - name: Notify Discord - Success
         if: success()
