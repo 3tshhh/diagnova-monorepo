@@ -228,7 +228,7 @@ export class CasesService {
     imageUrl: string,
   ): Promise<void> {
     const fastapiUrl =
-      this.configService.get<string>('FASTAPI_URL') ?? 'http://fastapi:8000';
+      this.configService.get<string>('FASTAPI_INTERNAL_URL') ?? 'http://ai:8000';
     const baseUrl =
       this.configService.get<string>('BASE_URL') ??
       this.configService.get<string>('APP_BASE_URL') ??

@@ -12,7 +12,6 @@ export class ChatbotService {
   private get fastapiBaseUrl(): string {
     return (
       process.env.FASTAPI_INTERNAL_URL ??
-      process.env.FASTAPI_URL ??
       'http://localhost:8000'
     );
   }
