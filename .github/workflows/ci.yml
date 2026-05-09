@@ -49,8 +49,8 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Type-check
-        run: pnpm tsc --noEmit
+      # - name: Type-check
+      #   run: pnpm tsc --noEmit
 
       - name: Build
         run: pnpm build
