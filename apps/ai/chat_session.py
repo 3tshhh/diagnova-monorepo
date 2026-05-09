@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from typing import List, Dict, Any
 
@@ -7,14 +8,26 @@ import redis
 SESSION_TTL_SECONDS = 1800
 KEY_PREFIX = "chat:session:"
 
+logger = logging.getLogger("diagnova.chat_session")
+
 _redis_client: redis.Redis | None = None
+_redis_unavailable = False
+
+_memory_store: Dict[str, str] = {}
 
 
-def _client() -> redis.Redis:
-    global _redis_client
+def _client() -> redis.Redis | None:
+    global _redis_client, _redis_unavailable
+    if _redis_unavailable:
+        return None
     if _redis_client is None:
         url = os.getenv("REDIS_URL", "redis://localhost:6379")
-        _redis_client = redis.from_url(url, decode_responses=True)
+        _redis_client = redis.from_url(
+            url,
+            decode_responses=True,
+            socket_connect_timeout=3,
+            socket_timeout=3,
+        )
     return _redis_client
 
 
@@ -23,7 +36,18 @@ def _key(session_id: str) -> str:
 
 
 def get_history(session_id: str) -> List[Dict[str, Any]]:
-    raw = _client().get(_key(session_id))
+    global _redis_unavailable
+    client = _client()
+    if client is not None:
+        try:
+            raw = client.get(_key(session_id))
+        except Exception:
+            logger.warning("Redis unavailable, falling back to in-memory store")
+            _redis_unavailable = True
+            raw = _memory_store.get(_key(session_id))
+    else:
+        raw = _memory_store.get(_key(session_id))
+
     if not raw:
         return []
     try:
@@ -34,12 +58,27 @@ def get_history(session_id: str) -> List[Dict[str, Any]]:
 
 
 def save_history(session_id: str, history: List[Dict[str, Any]]) -> None:
-    _client().set(
-        _key(session_id),
-        json.dumps(history),
-        ex=SESSION_TTL_SECONDS,
-    )
+    global _redis_unavailable
+    serialized = json.dumps(history)
+    client = _client()
+    if client is not None:
+        try:
+            client.set(_key(session_id), serialized, ex=SESSION_TTL_SECONDS)
+            return
+        except Exception:
+            logger.warning("Redis unavailable, falling back to in-memory store")
+            _redis_unavailable = True
+    _memory_store[_key(session_id)] = serialized
 
 
 def delete_session(session_id: str) -> None:
-    _client().delete(_key(session_id))
+    global _redis_unavailable
+    client = _client()
+    if client is not None:
+        try:
+            client.delete(_key(session_id))
+            return
+        except Exception:
+            logger.warning("Redis unavailable, falling back to in-memory store")
+            _redis_unavailable = True
+    _memory_store.pop(_key(session_id), None)

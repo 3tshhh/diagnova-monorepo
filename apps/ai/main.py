@@ -1,10 +1,11 @@
-import os
-import base64
-import json
+import asyncio
 import logging
+import os
+import tempfile
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Header, Depends, BackgroundTasks, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from gradio_client import Client, handle_file
 import httpx
 from chat_router import get_chat_router
 from schemas import AnalyzeRequest, CallbackPayload
@@ -14,9 +15,9 @@ logger = logging.getLogger("diagnova")
 load_dotenv()
 
 INTERNAL_SECRET = os.getenv("INTERNAL_SECRET")
-HF_TOKEN = os.getenv("HF_TOKEN")
-LUNG_SPACE_URL = os.getenv("LUNG_SPACE_URL", "https://etshh-lung.hf.space")
-BONE_SPACE_URL = os.getenv("BONE_SPACE_URL", "https://etshh-bone.hf.space")
+HF_TOKEN = os.getenv("HF_TOKEN") or None
+LUNG_SPACE = os.getenv("LUNG_SPACE", "etshh/lung")
+BONE_SPACE = os.getenv("BONE_SPACE", "etshh/bone")
 
 app = FastAPI(title="DIAGNOVA Inference API", version="2.0.0")
 
@@ -38,38 +39,29 @@ def verify_internal_key(x_internal_key: str = Header(...)):
 app.include_router(get_chat_router(verify_internal_key))
 
 
-def _hf_headers() -> dict:
-    return {"Authorization": f"Bearer {HF_TOKEN}"} if HF_TOKEN else {}
+def _predict_from_url(space: str, image_url: str) -> dict:
+    client = Client(space, hf_token=HF_TOKEN)
+    return client.predict(image=handle_file(image_url), api_name="/predict")
 
 
-async def call_hf_space(space_url: str, image_bytes: bytes) -> dict:
-    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
-    headers = _hf_headers()
+def _predict_from_bytes(space: str, image_bytes: bytes) -> dict:
+    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+        tmp.write(image_bytes)
+        tmp_path = tmp.name
+    try:
+        client = Client(space, hf_token=HF_TOKEN)
+        return client.predict(image=handle_file(tmp_path), api_name="/predict")
+    finally:
+        os.unlink(tmp_path)
 
-    async with httpx.AsyncClient(timeout=120) as client:
-        # Step 1: submit job → get event_id
-        trigger = await client.post(
-            f"{space_url}/call/predict",
-            json={"data": [f"data:image/jpeg;base64,{image_b64}"]},
-            headers=headers,
-        )
-        trigger.raise_for_status()
-        event_id = trigger.json()["event_id"]
 
-        # Step 2: stream SSE until the "complete" event
-        event_type = None
-        async with client.stream("GET", f"{space_url}/call/predict/{event_id}", headers=headers) as stream:
-            async for line in stream.aiter_lines():
-                if line.startswith("event: "):
-                    event_type = line[7:].strip()
-                elif line.startswith("data: "):
-                    data_str = line[6:].strip()
-                    if event_type == "error":
-                        raise RuntimeError(f"HuggingFace Space error: {data_str}")
-                    if event_type == "complete" and data_str and data_str != "null":
-                        return json.loads(data_str)[0]
-
-    raise RuntimeError("No result received from HuggingFace Space")
+def _format_result(result) -> str:
+    if isinstance(result, dict):
+        if "findings" in result:
+            return ", ".join(result["findings"])
+        if "prediction" in result:
+            return f"{result['prediction']} ({result['confidence']:.1%} confidence)"
+    return str(result)
 
 
 async def post_callback(callback_url: str, payload: CallbackPayload):
@@ -83,21 +75,9 @@ async def post_callback(callback_url: str, payload: CallbackPayload):
 
 async def run_analysis(job: AnalyzeRequest):
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.get(job.image_url)
-            resp.raise_for_status()
-            image_bytes = resp.content
-
-        space_url = LUNG_SPACE_URL if "lung" in job.case_type.lower() else BONE_SPACE_URL
-        result = await call_hf_space(space_url, image_bytes)
-
-        if "findings" in result:
-            finding = ", ".join(result["findings"])
-        else:
-            finding = f"{result['prediction']} ({result['confidence']:.1%} confidence)"
-
-        await post_callback(job.callback_url, CallbackPayload(finding=finding))
-
+        space = LUNG_SPACE if "lung" in job.case_type.lower() else BONE_SPACE
+        result = await asyncio.to_thread(_predict_from_url, space, job.image_url)
+        await post_callback(job.callback_url, CallbackPayload(finding=_format_result(result)))
     except Exception as exc:
         logger.error("Analysis failed for %s: %s", job.diagnosis_id, exc)
         try:
@@ -126,11 +106,11 @@ async def analyze(job: AnalyzeRequest, background_tasks: BackgroundTasks):
 async def predict_lung(file: UploadFile = File(...)):
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
-    return await call_hf_space(LUNG_SPACE_URL, await file.read())
+    return await asyncio.to_thread(_predict_from_bytes, LUNG_SPACE, await file.read())
 
 
 @app.post("/predict/bone", dependencies=[Depends(verify_internal_key)])
 async def predict_bone(file: UploadFile = File(...)):
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
-    return await call_hf_space(BONE_SPACE_URL, await file.read())
+    return await asyncio.to_thread(_predict_from_bytes, BONE_SPACE, await file.read())
