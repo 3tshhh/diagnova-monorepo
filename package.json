@@ -17,7 +17,8 @@
     "build:api": "turbo run build --filter=@diagnova/api",
     "build:fastapi": "turbo run build --filter=@diagnova/fastapi",
     "build:types": "turbo run build --filter=@diagnova/shared-types",
-    "build:web": "turbo run build --filter=@diagnova/web"
+    "build:web": "turbo run build --filter=@diagnova/web",
+    "push:dev": "pnpm lint && pnpm build && git add . && git commit -m \"$MESSAGE\" && git push origin dev"
   },
   "devDependencies": {
     "turbo": "^2.5.0"
