@@ -51,7 +51,7 @@ jobs:
         run: pnpm lint
 
       - name: Test
-        run: pnpm --recursive run test --if-present
+        run: pnpm -r run --if-present test
 
       - name: Build
         run: pnpm build
@@ -106,8 +106,8 @@ jobs:
         uses: sarisia/actions-status-discord@v1
         with:
             webhook: ${{ secrets.DISCORD_CI_URL }}
-            title: "CI Passed"
-            description: "PR `${{ github.head_ref }}` passed all checks"
+            title: "Auto-merge Succeeded"
+            description: "`dev` was merged into `master` on `${{ github.repository }}`"
             color: 0x00ff00
 
       - name: Notify Discord - Failure
@@ -115,6 +115,6 @@ jobs:
         uses: sarisia/actions-status-discord@v1
         with:
             webhook: ${{ secrets.DISCORD_CI_URL }}
-            title: "CI Failed"
-            description: "PR `${{ github.head_ref }}` failed checks"
+            title: "Auto-merge Failed"
+            description: "Auto-merge of `dev` into `master` failed on `${{ github.repository }}`"
             color: 0xff0000
