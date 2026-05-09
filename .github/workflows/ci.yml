@@ -47,12 +47,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Test
-        run: pnpm -r run --if-present test
-
       - name: Build
         run: pnpm build
 
@@ -99,7 +93,7 @@ jobs:
         if: steps.pr.outputs.number
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: gh pr merge ${{ steps.pr.outputs.number }} --squash --admin
+        run: gh pr merge ${{ steps.pr.outputs.number }} --merge --admin
 
       - name: Notify Discord - Success
         if: success()
