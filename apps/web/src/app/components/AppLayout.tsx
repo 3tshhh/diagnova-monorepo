@@ -136,12 +136,17 @@ export function AppLayout() {
           border: '1px solid rgba(255,255,255,0.08)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          justifyContent: isMobile ? 'center' : 'flex-start',
+        }}>
           {profile?.photoUrl ? (
             <img
               src={profile.photoUrl}
               alt={displayName}
-              style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', display: 'block' }}
+              style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', display: 'block', flexShrink: 0 }}
             />
           ) : (
             <div
@@ -156,12 +161,13 @@ export function AppLayout() {
                 justifyContent: 'center',
                 fontWeight: 600,
                 fontSize: 13,
+                flexShrink: 0,
               }}
             >
               {initials}
             </div>
           )}
-          <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
             <div
               style={{
                 fontSize: 13,
@@ -174,8 +180,18 @@ export function AppLayout() {
             >
               {displayName}
             </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }} className="mono">
-              {displayMeta}
+            <div
+              style={{
+                fontSize: 11,
+                color: 'rgba(255,255,255,0.55)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              className="mono"
+              title={displayMeta}
+            >
+              {displayMeta.length > 12 ? `${displayMeta.slice(0, 12)}…` : displayMeta}
             </div>
           </div>
         </div>

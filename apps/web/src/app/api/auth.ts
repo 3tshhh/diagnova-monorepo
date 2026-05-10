@@ -2,14 +2,14 @@ import { apiRequest } from './client';
 import { clearTokens, getAccessToken, setTokens } from './session';
 import type { ApiAuthTokens, LoginPayload, RegisterPayload } from './types';
 
-export async function login(payload: LoginPayload): Promise<ApiAuthTokens> {
+export async function login(payload: LoginPayload, remember = false): Promise<ApiAuthTokens> {
   const tokens = await apiRequest<ApiAuthTokens>('/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
-  setTokens(tokens.accessToken, tokens.refreshToken);
+  setTokens(tokens.accessToken, tokens.refreshToken, remember);
   return tokens;
 }
 

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router';
+import { Navigate, Route, Routes, useParams } from 'react-router';
 import { LanguageWrapper } from './components/LanguageWrapper';
 import { WelcomePage } from './pages/WelcomePage';
 import { LoginPage } from './pages/LoginPage';
@@ -13,12 +13,19 @@ import { ProfilePage } from './pages/ProfilePage';
 import { AboutPage } from './pages/AboutPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { AppLayout } from './components/AppLayout';
+import { isLoggedIn } from './api/session';
+
+function LangRoot() {
+  const { lang = 'en' } = useParams<{ lang: string }>();
+  if (isLoggedIn()) return <Navigate to={`/${lang}/app`} replace />;
+  return <WelcomePage />;
+}
 
 export function App() {
   return (
     <Routes>
       <Route path="/:lang" element={<LanguageWrapper />}>
-        <Route index element={<WelcomePage />} />
+        <Route index element={<LangRoot />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="signup" element={<SignupPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />

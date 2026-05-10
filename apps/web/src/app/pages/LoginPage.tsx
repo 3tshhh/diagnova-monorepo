@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useLangNavigate();
-  const [form, setForm] = useState({ email: '', pw: '' });
+  const [form, setForm] = useState({ email: '', pw: '', keep: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -18,10 +18,7 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      await login({
-        email: form.email,
-        password: form.pw,
-      });
+      await login({ email: form.email, password: form.pw }, form.keep);
       navigate('/app');
     } catch (err) {
       const message = err instanceof Error ? err.message : t('errors.unableToLogin');
@@ -78,7 +75,11 @@ export function LoginPage() {
             marginTop: 4,
           }}
         >
-          <input type="checkbox" /> {t('login.keepSignedIn')}
+          <input
+            type="checkbox"
+            checked={form.keep}
+            onChange={(e) => setForm({ ...form, keep: e.target.checked })}
+          /> {t('login.keepSignedIn')}
         </label>
 
         {error && (
