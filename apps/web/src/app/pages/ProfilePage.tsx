@@ -19,14 +19,42 @@ type ProfileForm = {
   gender: string;
 };
 
-function toForm(profile: PatientProfile, notAvailable: string): ProfileForm {
+/** Map any gender variant to the canonical value sent to the API. */
+function normalizeGender(value: string): string {
+  const v = value.trim();
+  if (v === 'ذكر' || v.toLowerCase() === 'male') return 'Male';
+  if (v === 'أنثى' || v.toLowerCase() === 'female') return 'Female';
+  return 'N/A';
+}
+
+/** Map stored DB value to a dropdown-compatible option for the current language. */
+function storedToFormGender(stored: string, genderOptions: string[]): string {
+  const lc = (stored || '').toLowerCase().trim();
+  if (lc === 'male') {
+    return genderOptions.find((o) => o.toLowerCase() === 'male' || o === 'ذكر') ?? genderOptions[0] ?? 'N/A';
+  }
+  if (lc === 'female') {
+    return genderOptions.find((o) => o.toLowerCase() === 'female' || o === 'أنثى') ?? genderOptions[0] ?? 'N/A';
+  }
+  return genderOptions[0] ?? 'N/A'; // 'N/A' in EN, 'غير محدد' in AR
+}
+
+/** Localized display label for a stored gender value. */
+function genderDisplayLabel(stored: string, isArabic: boolean): string | null {
+  const lc = (stored || '').toLowerCase().trim();
+  if (lc === 'male') return isArabic ? 'ذكر' : 'Male';
+  if (lc === 'female') return isArabic ? 'أنثى' : 'Female';
+  return null;
+}
+
+function toForm(profile: PatientProfile, genderOptions: string[]): ProfileForm {
   return {
     fullName: profile.fullName ?? '',
     phoneNumber: profile.phoneNumber ?? '',
     address: profile.address ?? '',
     age: profile.age === null ? '' : String(profile.age),
     nationalId: profile.nationalId ?? '',
-    gender: profile.gender ?? notAvailable,
+    gender: storedToFormGender(profile.gender, genderOptions),
   };
 }
 
@@ -40,7 +68,7 @@ function getInitials(name: string | null, email: string): string {
 }
 
 export function ProfilePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const GENDER_OPTIONS = t('profile.genderOptions', { returnObjects: true }) as string[];
   useAuthGuard();
   const navigate = useLangNavigate();
@@ -76,7 +104,7 @@ export function ProfilePage() {
       try {
         const data = await getProfile();
         setProfile(data);
-        setForm(toForm(data, t('common.fallbacks.notAvailable')));
+        setForm(toForm(data, GENDER_OPTIONS));
       } catch (err) {
         const message = err instanceof Error ? err.message : t('errors.unableToLoadProfile');
         setError(message);
@@ -87,6 +115,12 @@ export function ProfilePage() {
 
     void loadProfile();
   }, []);
+
+  useEffect(() => {
+    if (profile) {
+      setForm((prev) => ({ ...prev, gender: storedToFormGender(profile.gender, GENDER_OPTIONS) }));
+    }
+  }, [i18n.language]);
 
   const initials = useMemo(() => {
     if (!profile) return t('common.fallbacks.notAvailable');
@@ -126,11 +160,11 @@ export function ProfilePage() {
         address: form.address.trim() || undefined,
         age: form.age.trim() ? Number(form.age) : undefined,
         nationalId: form.nationalId.trim() || undefined,
-        gender: form.gender || undefined,
+        gender: form.gender ? normalizeGender(form.gender) : undefined,
       });
 
       setProfile(updated);
-      setForm(toForm(updated, t('common.fallbacks.notAvailable')));
+      setForm(toForm(updated, GENDER_OPTIONS));
       setEditing(false);
       setProfileMessage(t('messages.profileUpdated'));
     } catch (err) {
@@ -221,7 +255,7 @@ export function ProfilePage() {
 
   const cancelEditing = () => {
     if (!profile) return;
-    setForm(toForm(profile, t('common.fallbacks.notAvailable')));
+    setForm(toForm(profile, GENDER_OPTIONS));
     setEditing(false);
     setError('');
     setProfileMessage('');
@@ -344,7 +378,7 @@ export function ProfilePage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
               <span>{t('fields.gender')}</span>
               <span className="mono" style={{ color: 'var(--text)' }}>
-                {profile.gender || t('common.fallbacks.notAvailable')}
+                {genderDisplayLabel(profile.gender, i18n.language.startsWith('ar')) ?? t('common.fallbacks.notAvailable')}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>

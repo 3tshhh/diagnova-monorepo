@@ -4,6 +4,21 @@ import { DataSource, Repository } from 'typeorm';
 import { Patient } from './patient.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
+function normalizeGender(value: string | undefined | null): string {
+  switch (value?.trim()) {
+    case 'male':
+    case 'Male':
+    case 'ذكر':
+      return 'Male';
+    case 'female':
+    case 'Female':
+    case 'أنثى':
+      return 'Female';
+    default:
+      return 'N/A';
+  }
+}
+
 @Injectable()
 export class PatientService {
   constructor(
@@ -47,7 +62,7 @@ export class PatientService {
       address: data.address ?? null,
       age: data.age ?? null,
       nationalId: data.nationalId ?? null,
-      gender: data.gender ?? 'N/A',
+      gender: normalizeGender(data.gender),
       photoUrl: data.photoUrl ?? null,
     });
     return this.patientRepository.save(patient);
@@ -91,7 +106,7 @@ export class PatientService {
         ...(data.address !== undefined ? { address: data.address } : {}),
         ...(data.age !== undefined ? { age: data.age } : {}),
         ...(data.nationalId !== undefined ? { nationalId: data.nationalId } : {}),
-        ...(data.gender !== undefined ? { gender: data.gender } : {}),
+        ...(data.gender !== undefined ? { gender: normalizeGender(data.gender) } : {}),
       },
     );
   }

@@ -357,10 +357,8 @@
     "deleteConfirm": "Type your email address to confirm:",
     "genderOptions": [
       "N/A",
-      "male",
-      "female",
-      "ذكر",
-      "أنثى"
+      "Male",
+      "Female"
     ],
     "joined": "Joined {{year}}"
   },
