@@ -40,6 +40,7 @@ export type PatientCaseResponse = {
     fullName: string | null;
     email: string;
     age: number | null;
+    gender?: string | null;
   };
 };
 
