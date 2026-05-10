@@ -28,6 +28,6 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['Male', 'Female', 'Other', 'N/A'])
+  @IsIn(['male', 'female', 'ذكر', 'أنثى', 'N/A', 'غير محدد', 'Male', 'Female', 'Other'])
   gender?: string;
 }
