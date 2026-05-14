@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from './Icon';
-import { deleteChatSession, streamChatMessage } from '../api/chatbot';
+import { streamChatMessage } from '../api/chatbot';
 
 type Message = {
   id: string;
@@ -24,13 +24,6 @@ export function ChatbotPopup() {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Delete session on unmount (page close / navigation away)
-  useEffect(() => {
-    return () => {
-      deleteChatSession(sessionId);
-    };
-  }, [sessionId]);
 
   // Auto-scroll to latest message
   useEffect(() => {
