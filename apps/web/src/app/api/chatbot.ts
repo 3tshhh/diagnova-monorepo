@@ -71,11 +71,3 @@ export async function streamChatMessage(
   }
 }
 
-export function deleteChatSession(sessionId: string): void {
-  const token = getAccessToken();
-  // fire-and-forget — called on component unmount
-  void fetch(`${API_BASE_URL}/chatbot/session/${encodeURIComponent(sessionId)}`, {
-    method: 'DELETE',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  }).catch(() => {/* noop */});
-}

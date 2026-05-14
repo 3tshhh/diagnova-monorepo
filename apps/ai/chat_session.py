@@ -1,7 +1,8 @@
 import json
 import logging
 import os
-from typing import List, Dict, Any
+import time
+from typing import List, Dict, Any, Tuple
 
 import redis
 
@@ -13,7 +14,8 @@ logger = logging.getLogger("diagnova.chat_session")
 _redis_client: redis.Redis | None = None
 _redis_unavailable = False
 
-_memory_store: Dict[str, str] = {}
+# value is (serialized_json, expiry_timestamp)
+_memory_store: Dict[str, Tuple[str, float]] = {}
 
 
 def _client() -> redis.Redis | None:
@@ -44,9 +46,11 @@ def get_history(session_id: str) -> List[Dict[str, Any]]:
         except Exception:
             logger.warning("Redis unavailable, falling back to in-memory store")
             _redis_unavailable = True
-            raw = _memory_store.get(_key(session_id))
+            entry = _memory_store.get(_key(session_id))
+            raw = entry[0] if entry and entry[1] > time.time() else None
     else:
-        raw = _memory_store.get(_key(session_id))
+        entry = _memory_store.get(_key(session_id))
+        raw = entry[0] if entry and entry[1] > time.time() else None
 
     if not raw:
         return []
@@ -68,7 +72,7 @@ def save_history(session_id: str, history: List[Dict[str, Any]]) -> None:
         except Exception:
             logger.warning("Redis unavailable, falling back to in-memory store")
             _redis_unavailable = True
-    _memory_store[_key(session_id)] = serialized
+    _memory_store[_key(session_id)] = (serialized, time.time() + SESSION_TTL_SECONDS)
 
 
 def delete_session(session_id: str) -> None:
@@ -81,4 +85,4 @@ def delete_session(session_id: str) -> None:
         except Exception:
             logger.warning("Redis unavailable, falling back to in-memory store")
             _redis_unavailable = True
-    _memory_store.pop(_key(session_id), None)
+    _memory_store.pop(_key(session_id), None)  # still works if called explicitly

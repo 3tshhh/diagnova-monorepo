@@ -1,6 +1,7 @@
 import { PageHeader } from '../components/PageHeader';
 import { Icon, type IconName } from '../components/Icon';
 import { useTranslation } from 'react-i18next';
+import { teamMembers } from '../constants/team';
 
 type Model = {
   name: string;
@@ -12,20 +13,19 @@ type Model = {
 
 type TranslatedModel = Omit<Model, 'icon'>;
 
-const teamConfig = window.__TEAM__;
-const TEAM = [
-  { name: 'Karim Ashraf',   initials: 'KA', photo: teamConfig?.TEAM_1_PHOTO ?? '', linkedin: teamConfig?.TEAM_1_LINKEDIN ?? '' },
-  { name: 'Aya Fawzy',      initials: 'AF', photo: teamConfig?.TEAM_2_PHOTO ?? '', linkedin: teamConfig?.TEAM_2_LINKEDIN ?? '' },
-  { name: 'Shahd Ahmed',    initials: 'SA', photo: teamConfig?.TEAM_3_PHOTO ?? '', linkedin: teamConfig?.TEAM_3_LINKEDIN ?? '' },
-  { name: 'Jana Waleed',    initials: 'JW', photo: teamConfig?.TEAM_4_PHOTO ?? '', linkedin: teamConfig?.TEAM_4_LINKEDIN ?? '' },
-  { name: 'Sara Mohamed',   initials: 'SM', photo: teamConfig?.TEAM_5_PHOTO ?? '', linkedin: teamConfig?.TEAM_5_LINKEDIN ?? '' },
-  { name: 'Mohamed Hesham', initials: 'MH', photo: teamConfig?.TEAM_6_PHOTO ?? '', linkedin: teamConfig?.TEAM_6_LINKEDIN ?? '' },
-];
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api';
+const linkedInPage = 'https://www.linkedin.com/in/';
+const TEAM = teamMembers.map((m) => ({
+  ...m,
+  linkedin: `${linkedInPage}${m.LNusername}`,
+  photo: `${API_BASE_URL}/team/avatar/${encodeURIComponent(m.LNusername)}`,
+}));
 
 export function AboutPage() {
   const { t } = useTranslation();
   const modelIcons: IconName[] = ['wind', 'bone'];
-  const models = (t('about.models', { returnObjects: true }) as TranslatedModel[]).map((model, index) => ({
+  const rawModels = t('about.models', { returnObjects: true });
+  const models = (Array.isArray(rawModels) ? (rawModels as TranslatedModel[]) : []).map((model, index) => ({
     ...model,
     icon: modelIcons[index] ?? 'wind',
     tags: [...model.tags],
@@ -126,7 +126,7 @@ export function AboutPage() {
         {TEAM.map((m) => (
           <a
             key={m.name}
-            href={m.linkedin}
+            href={`${m.linkedin}`}
             target="_blank"
             rel="noopener noreferrer"
             className="card"

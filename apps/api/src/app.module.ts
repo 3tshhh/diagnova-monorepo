@@ -8,6 +8,7 @@ import { PatientModule } from './modules/patient/patient.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CasesModule } from './modules/cases/cases.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
+import { TeamModule } from './modules/team/team.module';
 import { InternalModule } from './internal/internal.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { InternalModule } from './internal/internal.module';
     AuthModule,
     CasesModule,
     ChatbotModule,
+    TeamModule,
     InternalModule,
   ],
 })
